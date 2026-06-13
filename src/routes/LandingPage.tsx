@@ -29,11 +29,16 @@ export function LandingPage() {
               Teddy!
             </h1>
             <p className="text-sm font-semibold tracking-widest font-mono text-primary uppercase">
-              Principal Full-Stack Engineer
+              Staff Systems Engineer
             </p>
-            <p className="text-sm text-text-muted max-w-md mx-auto leading-relaxed">
-              Specializing in high-performance local-first sync systems, scalable infrastructure, and premium user experiences.
-            </p>
+            <div className="space-y-4 text-sm text-text-muted max-w-md mx-auto leading-relaxed">
+              <p>
+                I am a Staff Systems Engineer with 15 years of experience architecting distributed systems, optimizing high-throughput data paths, and building infrastructure that scales predictably.
+              </p>
+              <p>
+                I specialize in identifying and modernizing overlooked linchpins in enterprise systems, bringing them up to rigorous engineering standards with a focus on developer experience and fault tolerance.
+              </p>
+            </div>
           </div>
         </div>
 
