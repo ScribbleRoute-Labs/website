@@ -1,0 +1,176 @@
+import { useState } from 'react'
+import { Plus, Check, MapPin, Sparkles, AlertCircle } from 'lucide-react'
+import type { Store } from '@/types/grocery'
+import { cn } from '@/utils/cn'
+
+// Mock Stores list
+const STORES: Store[] = [
+  { id: 1, name: 'Trader Joe\'s', position: 1, isDefaultSupported: true, sync_state: 'SYNCED', version: 1, is_deleted: false },
+  { id: 2, name: 'Whole Foods', position: 2, isDefaultSupported: false, sync_state: 'SYNCED', version: 1, is_deleted: false },
+  { id: 3, name: 'Costco', position: 3, isDefaultSupported: false, sync_state: 'SYNCED', version: 1, is_deleted: false },
+  { id: 4, name: 'Local Farmers Market', position: 4, isDefaultSupported: false, sync_state: 'SYNCED', version: 1, is_deleted: false },
+]
+
+// Mock Recommendations catalog with associated store IDs
+const RECOMMENDATIONS = [
+  { name: 'Organic Eggs', categoryId: 2, storeId: 1, timesBought: 45 },
+  { name: 'Avocados', categoryId: 1, storeId: 1, timesBought: 38 },
+  { name: 'Greek Yogurt', categoryId: 2, storeId: 2, timesBought: 29 },
+  { name: 'Almond Butter', categoryId: 4, storeId: 2, timesBought: 18 },
+  { name: 'Salmon Fillet', categoryId: 5, storeId: 3, timesBought: 22 },
+  { name: 'Sourdough Loaf', categoryId: 3, storeId: 1, timesBought: 17 },
+  { name: 'Rotisserie Chicken', categoryId: 5, storeId: 3, timesBought: 31 },
+  { name: 'Organic Spinach', categoryId: 1, storeId: 2, timesBought: 26 },
+  { name: 'Local Strawberries', categoryId: 1, storeId: 4, timesBought: 12 },
+  { name: 'Artisanal Honey', categoryId: 4, storeId: 4, timesBought: 9 },
+]
+
+export function PlanningPhase() {
+  const [selectedStoreId, setSelectedStoreId] = useState<number | null>(1) // Default to Trader Joe's
+  const [addedItems, setAddedItems] = useState<Record<string, boolean>>({})
+  
+  // Active planning list (items that are already in need or being planned)
+  const [plannedItems, setPlannedItems] = useState<string[]>([
+    'Organic Bananas', 'Whole Milk 1G'
+  ])
+
+  // Filter recommendations by selected store
+  const filteredRecs = RECOMMENDATIONS.filter(rec => 
+    selectedStoreId === null || rec.storeId === selectedStoreId
+  )
+
+  const handleAddRecommendation = (itemName: string) => {
+    if (addedItems[itemName]) return
+
+    setAddedItems(prev => ({ ...prev, [itemName]: true }))
+    setPlannedItems(prev => [...prev, itemName])
+
+    // Simulate adding to client-side database
+    console.log(`[Planning] Added recommendation to grocery list: ${itemName}`)
+    
+    // Auto-clear added state checkmark after 2 seconds
+    setTimeout(() => {
+      setAddedItems(prev => ({ ...prev, [itemName]: false }))
+    }, 2000)
+  }
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-200">
+      
+      {/* Horizontal Store Filter Bar */}
+      <div className="space-y-2">
+        <label className="text-[10px] uppercase tracking-wider font-bold text-text-muted px-1 block">
+          Select Store Filter
+        </label>
+        
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 mask-right">
+          <button
+            onClick={() => setSelectedStoreId(null)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all whitespace-nowrap cursor-pointer",
+              selectedStoreId === null 
+                ? "bg-primary text-black border-primary"
+                : "bg-surface-tile text-text-muted border-neutral-800 hover:border-neutral-700"
+            )}
+          >
+            All Stores
+          </button>
+
+          {STORES.map((store) => (
+            <button
+              key={store.id}
+              onClick={() => setSelectedStoreId(store.id)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all whitespace-nowrap cursor-pointer",
+                selectedStoreId === store.id 
+                  ? "bg-primary text-black border-primary" 
+                  : "bg-surface-tile text-text-muted border-neutral-800 hover:border-neutral-700"
+              )}
+            >
+              <MapPin className="w-3 h-3" />
+              {store.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Recommendation Tray */}
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <h4 className="text-xs font-bold tracking-widest text-text-muted uppercase">
+              Smart Recommendations
+            </h4>
+          </div>
+          <span className="text-[10px] text-neutral-500">Based on historical purchases</span>
+        </div>
+
+        {filteredRecs.length === 0 ? (
+          <div className="bg-surface-tile border border-neutral-900 rounded-xl p-6 text-center">
+            <AlertCircle className="w-5 h-5 text-neutral-500 mx-auto mb-2" />
+            <p className="text-sm text-text-muted">No recommendations for this store yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2.5">
+            {filteredRecs.map((rec) => {
+              const isAdded = addedItems[rec.name]
+              
+              return (
+                <button
+                  key={rec.name}
+                  onClick={() => handleAddRecommendation(rec.name)}
+                  disabled={isAdded}
+                  className={cn(
+                    "flex flex-col justify-between items-start text-left p-3 h-20 rounded-lg border transition-all cursor-pointer",
+                    isAdded 
+                      ? "bg-emerald-950/20 border-emerald-800 text-emerald-400" 
+                      : "bg-surface-tile border-neutral-950 hover:border-neutral-800 hover:bg-neutral-900/50"
+                  )}
+                >
+                  <div className="w-full flex items-start justify-between">
+                    <span className={cn(
+                      "text-xs font-semibold line-clamp-2 pr-2",
+                      isAdded ? "text-emerald-400" : "text-white"
+                    )}>
+                      {rec.name}
+                    </span>
+                    <div className={cn(
+                      "w-5 h-5 rounded-full flex items-center justify-center transition-all",
+                      isAdded ? "bg-emerald-500 text-black" : "bg-neutral-800 text-text-muted hover:bg-neutral-700"
+                    )}>
+                      {isAdded ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                    </div>
+                  </div>
+
+                  <span className="text-[9px] text-neutral-500">
+                    Bought {rec.timesBought}x
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Current List Progress */}
+      <div className="space-y-2.5">
+        <h4 className="text-xs font-bold tracking-widest text-text-muted px-1 uppercase">
+          Planned Items on active trip
+        </h4>
+
+        <div className="bg-surface-tile border border-neutral-900 rounded-xl divide-y divide-neutral-900 overflow-hidden">
+          {plannedItems.map((itemName, index) => (
+            <div key={index} className="flex items-center justify-between p-3.5 text-sm">
+              <span className="font-medium text-white">{itemName}</span>
+              <span className="text-[10px] text-text-muted bg-black/40 px-2 py-0.5 rounded border border-neutral-800">
+                Active in Need List
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+    </div>
+  )
+}
