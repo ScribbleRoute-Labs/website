@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { LandingPage } from './LandingPage'
 import { LoginPage } from './LoginPage'
+import { ArticlesPage } from './ArticlesPage'
 import { AuthenticatedRoute } from './AuthenticatedRoute'
 import { DashboardLayout } from '@/features/dashboard/components/DashboardLayout'
 import { NeedPhase } from '@/features/grocery/components/NeedPhase'
@@ -13,6 +14,9 @@ export function AppRoutes() {
     <Routes>
       {/* Public Landing Page */}
       <Route path="/" element={<LandingPage />} />
+
+      {/* Public Articles Page */}
+      <Route path="/articles" element={<ArticlesPage />} />
 
       {/* Public Login Page */}
       <Route path="/login" element={<LoginPage />} />
