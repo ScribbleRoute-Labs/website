@@ -108,7 +108,7 @@ api.interceptors.response.use(
       isRefreshing = true
 
       try {
-        const response = await refreshApi.post<{ refresh_token: string }>('/refresh', {
+        const response = await refreshApi.post<{ refresh_token: string }>('/auth/refresh', {
           refresh_token: refreshToken,
         })
         

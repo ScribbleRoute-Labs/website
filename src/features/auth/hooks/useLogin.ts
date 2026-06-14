@@ -12,7 +12,7 @@ export function useLogin() {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await api.post<LoginResponse>('/login', { credential })
+      const response = await api.post<LoginResponse>('/auth/login', { credential })
       const { user, refresh_token } = response.data
 
       // Save credentials in local storage
