@@ -1,96 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
 import type { TouchEvent, FormEvent } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import { Plus, Minus, Trash2, Check, Sparkles, X, ShoppingBag } from 'lucide-react'
-import type { GroceryItem } from '@/types/grocery'
+import type { GroceryItem, Category } from '@/types/grocery'
 import { cn } from '@/utils/cn'
 
-// Mock categories for categorization
-const CATEGORIES = [
+// Default fallback categories
+const DEFAULT_CATEGORIES = [
   { id: 1, name: 'Produce', color: '#8ADEAD' },
   { id: 2, name: 'Dairy & Eggs', color: '#FFD97D' },
   { id: 3, name: 'Bakery', color: '#FF9B85' },
   { id: 4, name: 'Pantry', color: '#90E0EF' },
   { id: 5, name: 'Meat & Seafood', color: '#EE6C4D' },
   { id: 6, name: 'Frozen', color: '#C18C5D' },
-]
-
-// Mock initial items representing typical local data
-const INITIAL_ITEMS: GroceryItem[] = [
-  {
-    id: 101,
-    name: 'Organic Bananas',
-    quantity: '1 bunch',
-    isBought: false,
-    createdAt: Date.now() - 100000,
-    position: 1,
-    categoryId: 1,
-    timesBought: 12,
-    isActive: true,
-    listId: '1',
-    sync_state: 'SYNCED',
-    version: 1,
-    is_deleted: false,
-  },
-  {
-    id: 102,
-    name: 'Whole Milk 1G',
-    quantity: '1',
-    isBought: false,
-    createdAt: Date.now() - 90000,
-    position: 2,
-    categoryId: 2,
-    timesBought: 8,
-    isActive: true,
-    listId: '1',
-    sync_state: 'SYNCED',
-    version: 1,
-    is_deleted: false,
-  },
-  {
-    id: 103,
-    name: 'Sourdough Bread',
-    quantity: '1 loaf',
-    isBought: false,
-    createdAt: Date.now() - 80000,
-    position: 3,
-    categoryId: 3,
-    timesBought: 5,
-    isActive: true,
-    listId: '1',
-    sync_state: 'PENDING_UPDATE',
-    version: 2,
-    is_deleted: false,
-  },
-  {
-    id: 104,
-    name: 'Greek Yogurt 32oz',
-    quantity: '2',
-    isBought: false,
-    createdAt: Date.now() - 70000,
-    position: 4,
-    categoryId: 2,
-    timesBought: 15,
-    isActive: true,
-    listId: '1',
-    sync_state: 'SYNCED',
-    version: 1,
-    is_deleted: false,
-  },
-  {
-    id: 105,
-    name: 'Avocados',
-    quantity: '3',
-    isBought: false,
-    createdAt: Date.now() - 60000,
-    position: 5,
-    categoryId: 1,
-    timesBought: 20,
-    isActive: true,
-    listId: '1',
-    sync_state: 'SYNCED',
-    version: 1,
-    is_deleted: false,
-  },
 ]
 
 // Common suggestion names for autocomplete
@@ -102,7 +24,22 @@ const SUGGESTIONS = [
 ]
 
 export function NeedPhase() {
-  const [items, setItems] = useState<GroceryItem[]>(INITIAL_ITEMS)
+  const { items, setItems, categories } = useOutletContext<{
+    items: GroceryItem[]
+    setItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>
+    categories: Category[]
+  }>()
+
+  const activeCategories = categories && categories.length > 0
+    ? categories.map(cat => {
+        const fallback = DEFAULT_CATEGORIES.find(d => d.id === cat.id)
+        return {
+          id: cat.id,
+          name: cat.name,
+          color: fallback?.color || '#C18C5D'
+        }
+      })
+    : DEFAULT_CATEGORIES
   const [expandedItemId, setExpandedItemId] = useState<number | null>(null)
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [newItemName, setNewItemName] = useState('')
@@ -240,13 +177,13 @@ export function NeedPhase() {
   const activeItems = items.filter(item => item.isActive && !item.is_deleted)
 
   // Group active items by category
-  const itemsByCategory = CATEGORIES.reduce((acc, cat) => {
+  const itemsByCategory = activeCategories.reduce((acc, cat) => {
     const catItems = activeItems.filter(item => item.categoryId === cat.id)
     if (catItems.length > 0) {
       acc.push({ category: cat, items: catItems })
     }
     return acc;
-  }, [] as { category: typeof CATEGORIES[0]; items: GroceryItem[] }[])
+  }, [] as { category: typeof activeCategories[0]; items: GroceryItem[] }[])
 
   return (
     <div className="relative flex-1 flex flex-col min-h-0">
@@ -465,7 +402,7 @@ export function NeedPhase() {
                     onChange={(e) => setNewItemCategory(parseInt(e.target.value, 10))}
                     className="w-full bg-black/40 border border-neutral-800 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary text-white"
                   >
-                    {CATEGORIES.map(cat => (
+                    {activeCategories.map(cat => (
                       <option key={cat.id} value={cat.id} className="bg-surface-tile text-white">
                         {cat.name}
                       </option>

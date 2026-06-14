@@ -3,8 +3,8 @@ import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
 
 // Resolve the API base URL from Vite environment variables or default to '/api' in development
 const baseURL = import.meta.env.DEV 
-  ? '/api' 
-  : (import.meta.env.VITE_API_BASE_URL || 'https://api-rust.teddy.fyi/api')
+  ? '' 
+  : (import.meta.env.VITE_API_BASE_URL || 'https://api-rust.teddy.fyi')
 
 export const api = axios.create({
   baseURL,
@@ -62,6 +62,14 @@ const processQueue = (error: unknown) => {
 // Request interceptor (can be used for additional headers if needed)
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    let clientUuid = localStorage.getItem('grocery_client_id')
+    if (!clientUuid) {
+      clientUuid = typeof crypto !== 'undefined' && crypto.randomUUID 
+        ? crypto.randomUUID() 
+        : Math.random().toString(36).substring(2) + Date.now().toString(36)
+      localStorage.setItem('grocery_client_id', clientUuid)
+    }
+    config.headers['X-Client-UUID'] = clientUuid
     return config
   },
   (error) => {
@@ -108,8 +116,23 @@ api.interceptors.response.use(
       isRefreshing = true
 
       try {
+        const storedUser = localStorage.getItem('user_info')
+        const user = storedUser ? JSON.parse(storedUser) : null
+        const userId = user?.id || ''
+        
+        let clientUuid = localStorage.getItem('grocery_client_id')
+        if (!clientUuid) {
+          clientUuid = typeof crypto !== 'undefined' && crypto.randomUUID 
+            ? crypto.randomUUID() 
+            : Math.random().toString(36).substring(2) + Date.now().toString(36)
+          localStorage.setItem('grocery_client_id', clientUuid)
+        }
+
         const response = await refreshApi.post<{ refresh_token: string }>('/auth/refresh', {
+          user_id: userId,
+          client_uuid: clientUuid,
           refresh_token: refreshToken,
+          use_cookie: true,
         })
         
         const newRefreshToken = response.data.refresh_token

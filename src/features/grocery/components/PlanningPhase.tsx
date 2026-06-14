@@ -1,18 +1,19 @@
 import { useState } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import { Plus, Check, MapPin, Sparkles, AlertCircle } from 'lucide-react'
-import type { Store } from '@/types/grocery'
+import type { Store, GroceryItem, Category } from '@/types/grocery'
 import { cn } from '@/utils/cn'
 
-// Mock Stores list
-const STORES: Store[] = [
+// Default fallback stores list
+const DEFAULT_STORES: Store[] = [
   { id: 1, name: 'Trader Joe\'s', position: 1, isDefaultSupported: true, sync_state: 'SYNCED', version: 1, is_deleted: false },
   { id: 2, name: 'Whole Foods', position: 2, isDefaultSupported: false, sync_state: 'SYNCED', version: 1, is_deleted: false },
   { id: 3, name: 'Costco', position: 3, isDefaultSupported: false, sync_state: 'SYNCED', version: 1, is_deleted: false },
   { id: 4, name: 'Local Farmers Market', position: 4, isDefaultSupported: false, sync_state: 'SYNCED', version: 1, is_deleted: false },
 ]
 
-// Mock Recommendations catalog with associated store IDs
-const RECOMMENDATIONS = [
+// Default fallback recommendations catalog
+const DEFAULT_RECOMMENDATIONS = [
   { name: 'Organic Eggs', categoryId: 2, storeId: 1, timesBought: 45 },
   { name: 'Avocados', categoryId: 1, storeId: 1, timesBought: 38 },
   { name: 'Greek Yogurt', categoryId: 2, storeId: 2, timesBought: 29 },
@@ -26,16 +27,45 @@ const RECOMMENDATIONS = [
 ]
 
 export function PlanningPhase() {
+  const { items, setItems, stores } = useOutletContext<{
+    items: GroceryItem[]
+    setItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>
+    stores: Store[]
+    categories: Category[]
+  }>()
+
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(1) // Default to Trader Joe's
   const [addedItems, setAddedItems] = useState<Record<string, boolean>>({})
   
-  // Active planning list (items that are already in need or being planned)
-  const [plannedItems, setPlannedItems] = useState<string[]>([
-    'Organic Bananas', 'Whole Milk 1G'
-  ])
+  const activeStores = [...(stores && stores.length > 0 ? stores : DEFAULT_STORES)]
+    .filter(s => !s.is_deleted)
+    .sort((a, b) => a.position - b.position)
+
+  // Active planning list (derived dynamically from the active list items)
+  const plannedItems = items
+    .filter(item => item.isActive && !item.is_deleted)
+    .map(item => item.name)
+
+  // Generate dynamic recommendations from historically bought items
+  const dynamicRecs = items
+    .filter(item => !item.isActive && !item.is_deleted && item.timesBought > 0)
+    .map(item => ({
+      name: item.name,
+      categoryId: item.categoryId || 1,
+      storeId: selectedStoreId || 1,
+      timesBought: item.timesBought
+    }))
+
+  // Merge dynamic recommendations with default ones, preventing duplicates
+  const recommendations = [...dynamicRecs]
+  DEFAULT_RECOMMENDATIONS.forEach(def => {
+    if (!recommendations.some(r => r.name.toLowerCase() === def.name.toLowerCase())) {
+      recommendations.push(def)
+    }
+  })
 
   // Filter recommendations by selected store
-  const filteredRecs = RECOMMENDATIONS.filter(rec => 
+  const filteredRecs = recommendations.filter(rec => 
     selectedStoreId === null || rec.storeId === selectedStoreId
   )
 
@@ -43,10 +73,25 @@ export function PlanningPhase() {
     if (addedItems[itemName]) return
 
     setAddedItems(prev => ({ ...prev, [itemName]: true }))
-    setPlannedItems(prev => [...prev, itemName])
 
-    // Simulate adding to client-side database
-    console.log(`[Planning] Added recommendation to grocery list: ${itemName}`)
+    // Create a new real grocery item and append it
+    const newItem: GroceryItem = {
+      id: Date.now(), // Local client ID
+      name: itemName,
+      quantity: '1',
+      isBought: false,
+      createdAt: Date.now(),
+      position: items.length + 1,
+      categoryId: 1, // Default category
+      timesBought: 1,
+      isActive: true,
+      listId: '1',
+      sync_state: 'PENDING_INSERT',
+      version: 1,
+      is_deleted: false,
+    }
+
+    setItems(prev => [...prev, newItem])
     
     // Auto-clear added state checkmark after 2 seconds
     setTimeout(() => {
@@ -76,7 +121,7 @@ export function PlanningPhase() {
             All Stores
           </button>
 
-          {STORES.map((store) => (
+          {activeStores.map((store) => (
             <button
               key={store.id}
               onClick={() => setSelectedStoreId(store.id)}

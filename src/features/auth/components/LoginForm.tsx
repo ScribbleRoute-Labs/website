@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLogin } from '../hooks/useLogin'
 
 interface GoogleIdCredentialResponse {
@@ -37,6 +38,7 @@ declare global {
 
 export function LoginForm() {
   const { loginWithGoogle, isLoading, error } = useLogin()
+  const navigate = useNavigate()
   const buttonRef = useRef<HTMLDivElement>(null)
   const [scriptLoaded, setScriptLoaded] = useState(false)
   const [gsiError, setGsiError] = useState<string | null>(null)
@@ -75,6 +77,7 @@ export function LoginForm() {
           if (response.credential) {
             try {
               await loginWithGoogle(response.credential)
+              navigate('/')
             } catch (err) {
               console.error('Google Sign-In exchange failed:', err)
             }

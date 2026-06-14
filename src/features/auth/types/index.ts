@@ -12,18 +12,26 @@ export interface AuthState {
 }
 
 export interface LoginRequest {
-  credential: string
+  user_id: string
+  client_uuid: string
+  google_auth_token: string
+  use_cookie?: boolean
 }
 
 export interface LoginResponse {
-  user: User
+  user_id: string
+  email: string | null
   refresh_token: string
 }
 
 export interface RefreshRequest {
+  user_id: string
+  client_uuid: string
   refresh_token: string
+  use_cookie?: boolean
 }
 
 export interface RefreshResponse {
   refresh_token: string
 }
+

@@ -1,20 +1,44 @@
 import { useState } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import { Database, RefreshCw, Trash2, ShieldAlert, HardDrive, Wifi } from 'lucide-react'
 import { cn } from '@/utils/cn'
+import type { GroceryItem, GroceryList, Store, Category } from '@/types/grocery'
 
 export function SettingsPhase() {
+  const { items, lists, stores, categories } = useOutletContext<{
+    items: GroceryItem[]
+    lists: GroceryList[]
+    stores: Store[]
+    categories: Category[]
+  }>()
+
   const [syncInterval, setSyncInterval] = useState('auto')
   const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_BASE_URL || '/api')
-  const [pendingChanges, setPendingChanges] = useState(2) // Mock change queues
   const [clearing, setClearing] = useState(false)
+
+  const pendingChanges = 
+    (items || []).filter(i => i.sync_state !== 'SYNCED').length +
+    (lists || []).filter(l => l.sync_state !== 'SYNCED').length +
+    (stores || []).filter(s => s.sync_state !== 'SYNCED').length +
+    (categories || []).filter(c => c.sync_state !== 'SYNCED').length
+
+  const totalCached = 
+    (items || []).length +
+    (lists || []).length +
+    (stores || []).length +
+    (categories || []).length
 
   const handleClearLocal = () => {
     setClearing(true)
     setTimeout(() => {
+      localStorage.removeItem('grocery_items')
+      localStorage.removeItem('grocery_lists')
+      localStorage.removeItem('grocery_stores')
+      localStorage.removeItem('grocery_categories')
       localStorage.removeItem('grocery_last_synced')
-      setPendingChanges(0)
       setClearing(false)
       alert('Local caching storage cleared successfully.')
+      window.location.reload()
     }, 1000)
   }
 
@@ -98,7 +122,7 @@ export function SettingsPhase() {
           </div>
           <div className="flex justify-between py-2.5">
             <span className="text-text-muted">Total Cached Items</span>
-            <span className="font-semibold text-white">48 records</span>
+            <span className="font-semibold text-white">{totalCached} records</span>
           </div>
         </div>
       </div>

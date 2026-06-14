@@ -1,41 +1,43 @@
 import { useState } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import { ChevronDown, CheckSquare, Square, Check, MapPin, ClipboardList } from 'lucide-react'
-import type { GroceryItem, Store } from '@/types/grocery'
+import type { GroceryItem, Store, Category } from '@/types/grocery'
 import { cn } from '@/utils/cn'
 
-// Mock Stores list
-const STORES: Store[] = [
+// Default fallback stores list
+const DEFAULT_STORES: Store[] = [
   { id: 1, name: 'Trader Joe\'s', position: 1, isDefaultSupported: true, sync_state: 'SYNCED', version: 1, is_deleted: false },
   { id: 2, name: 'Whole Foods', position: 2, isDefaultSupported: false, sync_state: 'SYNCED', version: 1, is_deleted: false },
   { id: 3, name: 'Costco', position: 3, isDefaultSupported: false, sync_state: 'SYNCED', version: 1, is_deleted: false },
 ]
 
-// Mock active items for the selected store
-const INITIAL_SHOPPING_ITEMS: GroceryItem[] = [
-  { id: 201, name: 'Trader Joe\'s Bananas', quantity: '1 bunch', isBought: false, createdAt: Date.now(), position: 1, categoryId: 1, timesBought: 12, isActive: true, listId: '1', sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 202, name: 'Havarti Cheese slice', quantity: '1 pack', isBought: false, createdAt: Date.now(), position: 2, categoryId: 2, timesBought: 8, isActive: true, listId: '1', sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 203, name: 'Sourdough Bagels', quantity: '2 packs', isBought: false, createdAt: Date.now(), position: 3, categoryId: 3, timesBought: 5, isActive: true, listId: '1', sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 204, name: 'Cold Brew Coffee', quantity: '1 bottle', isBought: false, createdAt: Date.now(), position: 4, categoryId: 4, timesBought: 15, isActive: true, listId: '1', sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 205, name: 'Ribeye Steak', quantity: '2 lb', isBought: true, createdAt: Date.now(), position: 5, categoryId: 5, timesBought: 20, isActive: true, listId: '1', sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 206, name: 'Frozen Berries', quantity: '1 bag', isBought: true, createdAt: Date.now(), position: 6, categoryId: 6, timesBought: 4, isActive: true, listId: '1', sync_state: 'SYNCED', version: 1, is_deleted: false },
-]
-
-const CATEGORIES = [
-  { id: 1, name: 'Produce' },
-  { id: 2, name: 'Dairy & Eggs' },
-  { id: 3, name: 'Bakery' },
-  { id: 4, name: 'Pantry' },
-  { id: 5, name: 'Meat & Seafood' },
-  { id: 6, name: 'Frozen' },
+// Default fallback categories
+const DEFAULT_CATEGORIES: Category[] = [
+  { id: 1, name: 'Produce', position: 1, sync_state: 'SYNCED', version: 1, is_deleted: false },
+  { id: 2, name: 'Dairy & Eggs', position: 2, sync_state: 'SYNCED', version: 1, is_deleted: false },
+  { id: 3, name: 'Bakery', position: 3, sync_state: 'SYNCED', version: 1, is_deleted: false },
+  { id: 4, name: 'Pantry', position: 4, sync_state: 'SYNCED', version: 1, is_deleted: false },
+  { id: 5, name: 'Meat & Seafood', position: 5, sync_state: 'SYNCED', version: 1, is_deleted: false },
+  { id: 6, name: 'Frozen', position: 6, sync_state: 'SYNCED', version: 1, is_deleted: false },
 ]
 
 export function ShoppingPhase() {
+  const { items, setItems, stores, categories } = useOutletContext<{
+    items: GroceryItem[]
+    setItems: React.Dispatch<React.SetStateAction<GroceryItem[]>>
+    stores: Store[]
+    categories: Category[]
+  }>()
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null)
   const [isStoreDropdownOpen, setIsStoreDropdownOpen] = useState(false)
-  const [items, setItems] = useState<GroceryItem[]>(INITIAL_SHOPPING_ITEMS)
   const [isConfirmTripOpen, setIsConfirmTripOpen] = useState(false)
 
-  const activeStore = STORES.find(s => s.id === selectedStoreId)
+  const activeStores = [...(stores && stores.length > 0 ? stores : DEFAULT_STORES)]
+    .filter(s => !s.is_deleted)
+    .sort((a, b) => a.position - b.position)
+  const activeCategories = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES
+
+  const activeStore = activeStores.find(s => s.id === selectedStoreId)
 
   // Toggle "Bought" state (Moves items in cart)
   const toggleBought = (itemId: number) => {
@@ -74,13 +76,13 @@ export function ShoppingPhase() {
   const inCartItems = activeItems.filter(item => item.isBought)
 
   // Group to-buy items by category
-  const toBuyByCategory = CATEGORIES.reduce((acc, cat) => {
+  const toBuyByCategory = activeCategories.reduce((acc, cat) => {
     const catItems = toBuyItems.filter(item => item.categoryId === cat.id)
     if (catItems.length > 0) {
       acc.push({ category: cat, items: catItems })
     }
     return acc
-  }, [] as { category: typeof CATEGORIES[0]; items: GroceryItem[] }[])
+  }, [] as { category: typeof activeCategories[0]; items: GroceryItem[] }[])
 
   return (
     <div className="space-y-5 flex-1 flex flex-col min-h-0 animate-in fade-in duration-200">
@@ -105,7 +107,7 @@ export function ShoppingPhase() {
           <>
             <div className="fixed inset-0 z-40" onClick={() => setIsStoreDropdownOpen(false)} />
             <div className="absolute left-0 right-0 mt-2 bg-surface-tile border border-neutral-800 rounded-xl shadow-2xl z-50 py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-              {STORES.map((store) => (
+              {activeStores.map((store) => (
                 <button
                   key={store.id}
                   onClick={() => {

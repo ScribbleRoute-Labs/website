@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react'
 import api from '@/lib/axios'
 import type { 
   GroceryItem, 
+  GroceryList,
   Store, 
   Category, 
   ChangeDelta, 
@@ -35,8 +36,9 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
   // Core Sync Trigger
   const syncNow = useCallback(async (
     localItems: GroceryItem[],
-    _localStores: Store[] = [],
-    _localCategories: Category[] = []
+    localLists: GroceryList[] = [],
+    localStores: Store[] = [],
+    localCategories: Category[] = []
   ): Promise<SyncResponse | null> => {
     setIsSyncing(true)
     setError(null)
@@ -48,7 +50,7 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
       // Default to true (pull data) if the endpoint returns 404 or fails.
       let hasRemoteChanges = true
       try {
-        const checkRes = await api.get<{ hasChanges: boolean }>('/sync/check-status', {
+        const checkRes = await api.get<{ hasChanges: boolean }>('/api/sync/check-status', {
           params: {
             client_id: clientId.current,
             last_synced_at: lastSyncedAt
@@ -82,8 +84,58 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
           }
         })
 
+      const listChanges: ChangeDelta<GroceryList>[] = localLists
+        .filter(list => list.sync_state !== 'SYNCED')
+        .map(list => {
+          let deltaType: 'INSERT' | 'UPDATE' | 'DELETE' = 'UPDATE'
+          if (list.sync_state === 'PENDING_INSERT') deltaType = 'INSERT'
+          if (list.sync_state === 'PENDING_DELETE' || list.is_deleted) deltaType = 'DELETE'
+
+          return {
+            id: list.id,
+            type: deltaType,
+            version: list.version,
+            data: deltaType === 'DELETE' ? null : list
+          }
+        })
+
+      const storeChanges: ChangeDelta<Store>[] = localStores
+        .filter(store => store.sync_state !== 'SYNCED')
+        .map(store => {
+          let deltaType: 'INSERT' | 'UPDATE' | 'DELETE' = 'UPDATE'
+          if (store.sync_state === 'PENDING_INSERT') deltaType = 'INSERT'
+          if (store.sync_state === 'PENDING_DELETE' || store.is_deleted) deltaType = 'DELETE'
+
+          return {
+            id: store.id,
+            type: deltaType,
+            version: store.version,
+            data: deltaType === 'DELETE' ? null : store
+          }
+        })
+
+      const categoryChanges: ChangeDelta<Category>[] = localCategories
+        .filter(category => category.sync_state !== 'SYNCED')
+        .map(category => {
+          let deltaType: 'INSERT' | 'UPDATE' | 'DELETE' = 'UPDATE'
+          if (category.sync_state === 'PENDING_INSERT') deltaType = 'INSERT'
+          if (category.sync_state === 'PENDING_DELETE' || category.is_deleted) deltaType = 'DELETE'
+
+          return {
+            id: category.id,
+            type: deltaType,
+            version: category.version,
+            data: deltaType === 'DELETE' ? null : category
+          }
+        })
+
       // Skip heavy network request if neither the remote server nor local client has changes
-      const hasLocalChanges = groceryChanges.length > 0
+      const hasLocalChanges = 
+        groceryChanges.length > 0 || 
+        listChanges.length > 0 || 
+        storeChanges.length > 0 || 
+        categoryChanges.length > 0
+
       if (!hasRemoteChanges && !hasLocalChanges) {
         console.log('[Sync] Caching optimization hit. Client and remote match. Skipping sync payload.')
         setIsSyncing(false)
@@ -94,16 +146,19 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
       const syncRequest: SyncRequest = {
         last_synced_at: lastSyncedAt,
         client_id: clientId.current,
+        scope: 'GROCERY',
         grocery_changes: groceryChanges,
-        // (Add store_changes, category_changes etc. here as schemas expand)
+        grocery_list_changes: listChanges,
+        store_changes: storeChanges,
+        category_changes: categoryChanges,
       }
 
       // 4. Transport payload to atomic sync endpoint
-      const response = await api.post<SyncResponse>('/sync', syncRequest)
+      const response = await api.post<SyncResponse>('/api/sync', syncRequest)
       const syncResponse = response.data
 
       // 5. Update local tracking states
-      localStorage.setItem('grocery_last_synced', syncResponse.last_synced_at)
+      localStorage.setItem('grocery_last_synced', syncResponse.server_timestamp)
       
       if (options.onSyncSuccess) {
         options.onSyncSuccess(syncResponse)
@@ -130,7 +185,6 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
     localItems: GroceryItem[],
     remoteChanges: ChangeDelta<GroceryItem>[] = []
   ): GroceryItem[] => {
-    // Clone local list
     let merged = [...localItems]
 
     remoteChanges.forEach(change => {
@@ -138,7 +192,6 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
 
       if (change.type === 'DELETE') {
         if (localIndex !== -1) {
-          // Hard delete on local db if synced delete
           merged.splice(localIndex, 1)
         }
         return
@@ -148,7 +201,6 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
       if (!remoteItem) return
 
       if (localIndex === -1) {
-        // New item from server
         merged.push({
           ...remoteItem,
           sync_state: 'SYNCED'
@@ -156,28 +208,21 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
       } else {
         const localItem = merged[localIndex]
         
-        // Conflict check: compare versions
         if (change.version >= localItem.version) {
-          // Server wins
           merged[localIndex] = {
             ...remoteItem,
             sync_state: 'SYNCED'
           }
         } else {
-          // Client has higher version, client changes win (will upload on next sync loop)
-          // We keep local state dirty PENDING_UPDATE
           console.warn(`[Sync] Conflict detected for item ${localItem.name}. Client version (${localItem.version}) exceeds server (${change.version}). Keeping local changes.`)
         }
       }
     })
 
-    // Clean up successfully synced local deletes (permanently purge)
     merged = merged.filter(item => !(item.sync_state === 'PENDING_DELETE' && item.is_deleted))
 
-    // Set any pending items that were successfully synced to SYNCED
     return merged.map(item => {
       if (item.sync_state === 'PENDING_INSERT' || item.sync_state === 'PENDING_UPDATE') {
-        // If it wasn't overwritten by server, it has been successfully received by server
         return {
           ...item,
           sync_state: 'SYNCED'
@@ -187,9 +232,159 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
     })
   }, [])
 
+  // Conflict Resolution helper for Lists
+  const resolveListConflicts = useCallback((
+    localLists: GroceryList[],
+    remoteChanges: ChangeDelta<GroceryList>[] = []
+  ): GroceryList[] => {
+    let merged = [...localLists]
+
+    remoteChanges.forEach(change => {
+      const localIndex = merged.findIndex(list => list.id === change.id)
+
+      if (change.type === 'DELETE') {
+        if (localIndex !== -1) {
+          merged.splice(localIndex, 1)
+        }
+        return
+      }
+
+      const remoteList = change.data as GroceryList
+      if (!remoteList) return
+
+      if (localIndex === -1) {
+        merged.push({
+          ...remoteList,
+          sync_state: 'SYNCED'
+        })
+      } else {
+        const localList = merged[localIndex]
+        if (change.version >= localList.version) {
+          merged[localIndex] = {
+            ...remoteList,
+            sync_state: 'SYNCED'
+          }
+        }
+      }
+    })
+
+    merged = merged.filter(list => !(list.sync_state === 'PENDING_DELETE' && list.is_deleted))
+
+    return merged.map(list => {
+      if (list.sync_state === 'PENDING_INSERT' || list.sync_state === 'PENDING_UPDATE') {
+        return {
+          ...list,
+          sync_state: 'SYNCED'
+        }
+      }
+      return list
+    })
+  }, [])
+
+  // Conflict Resolution helper for Stores
+  const resolveStoreConflicts = useCallback((
+    localStores: Store[],
+    remoteChanges: ChangeDelta<Store>[] = []
+  ): Store[] => {
+    let merged = [...localStores]
+
+    remoteChanges.forEach(change => {
+      const localIndex = merged.findIndex(store => store.id === change.id)
+
+      if (change.type === 'DELETE') {
+        if (localIndex !== -1) {
+          merged.splice(localIndex, 1)
+        }
+        return
+      }
+
+      const remoteStore = change.data as Store
+      if (!remoteStore) return
+
+      if (localIndex === -1) {
+        merged.push({
+          ...remoteStore,
+          sync_state: 'SYNCED'
+        })
+      } else {
+        const localStore = merged[localIndex]
+        if (change.version >= localStore.version) {
+          merged[localIndex] = {
+            ...remoteStore,
+            sync_state: 'SYNCED'
+          }
+        }
+      }
+    })
+
+    merged = merged.filter(store => !(store.sync_state === 'PENDING_DELETE' && store.is_deleted))
+
+    return merged.map(store => {
+      if (store.sync_state === 'PENDING_INSERT' || store.sync_state === 'PENDING_UPDATE') {
+        return {
+          ...store,
+          sync_state: 'SYNCED'
+        }
+      }
+      return store
+    })
+  }, [])
+
+  // Conflict Resolution helper for Categories
+  const resolveCategoryConflicts = useCallback((
+    localCategories: Category[],
+    remoteChanges: ChangeDelta<Category>[] = []
+  ): Category[] => {
+    let merged = [...localCategories]
+
+    remoteChanges.forEach(change => {
+      const localIndex = merged.findIndex(category => category.id === change.id)
+
+      if (change.type === 'DELETE') {
+        if (localIndex !== -1) {
+          merged.splice(localIndex, 1)
+        }
+        return
+      }
+
+      const remoteCategory = change.data as Category
+      if (!remoteCategory) return
+
+      if (localIndex === -1) {
+        merged.push({
+          ...remoteCategory,
+          sync_state: 'SYNCED'
+        })
+      } else {
+        const localCategory = merged[localIndex]
+        if (change.version >= localCategory.version) {
+          merged[localIndex] = {
+            ...remoteCategory,
+            sync_state: 'SYNCED'
+          }
+        }
+      }
+    })
+
+    merged = merged.filter(category => !(category.sync_state === 'PENDING_DELETE' && category.is_deleted))
+
+    return merged.map(category => {
+      if (category.sync_state === 'PENDING_INSERT' || category.sync_state === 'PENDING_UPDATE') {
+        return {
+          ...category,
+          sync_state: 'SYNCED'
+        }
+      }
+      return category
+    })
+  }, [])
+
   return {
     syncNow,
     resolveConflicts,
+    resolveListConflicts,
+    resolveStoreConflicts,
+    resolveCategoryConflicts,
     isSyncing,
     error
   }

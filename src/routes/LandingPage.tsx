@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
 import { FileText, ArrowRight, Sparkles, Code2, BookOpen } from 'lucide-react'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 
 export function LandingPage() {
+  const { isAuthenticated } = useAuth()
   return (
     <div className="min-h-screen bg-black text-white flex flex-col justify-between items-center px-4 py-12 font-sans antialiased selection:bg-[#c0a9f5]/30">
 
@@ -123,7 +125,7 @@ export function LandingPage() {
               to="/grocery"
               className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-[#c0a9f5] text-black font-bold text-xs py-3 px-5 rounded-lg active:scale-95 transition-all shadow-[0_0_20px_rgba(208,188,255,0.15)] cursor-pointer"
             >
-              <span>Authenticate & Launch</span>
+              <span>{isAuthenticated ? 'Go to App' : 'Authenticate & Launch'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

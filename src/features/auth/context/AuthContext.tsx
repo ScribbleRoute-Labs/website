@@ -45,17 +45,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       try {
+        const storedUser = localStorage.getItem('user_info')
+        const user = storedUser ? JSON.parse(storedUser) : null
+        const userId = user?.id || ''
+        
+        let clientUuid = localStorage.getItem('grocery_client_id')
+        if (!clientUuid) {
+          clientUuid = typeof crypto !== 'undefined' && crypto.randomUUID 
+            ? crypto.randomUUID() 
+            : Math.random().toString(36).substring(2) + Date.now().toString(36)
+          localStorage.setItem('grocery_client_id', clientUuid)
+        }
+
         // Exchange refresh token for a fresh session cookie
-        const response = await api.post<{ refresh_token: string }>('/refresh', {
+        const response = await api.post<{ refresh_token: string }>('/auth/refresh', {
+          user_id: userId,
+          client_uuid: clientUuid,
           refresh_token: refreshToken,
+          use_cookie: true,
         })
 
         // Store new refresh token
         localStorage.setItem('refresh_token', response.data.refresh_token)
-
-        // Retrieve cached user profile
-        const storedUser = localStorage.getItem('user_info')
-        const user = storedUser ? JSON.parse(storedUser) : null
 
         setAuthStateInternal({
           isAuthenticated: true,

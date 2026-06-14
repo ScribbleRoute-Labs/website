@@ -84,23 +84,30 @@ export interface ChangeDelta<T = any> {
   data: T | null; // null for deletes
 }
 
+export type SyncScope = 'ALL' | 'GROCERY' | 'TODO';
+
 export interface SyncRequest {
   last_synced_at: string; // ISO 8601 string
   client_id: string; // Unique client identifier
+  scope?: SyncScope;
   grocery_changes?: ChangeDelta<GroceryItem>[];
-  list_changes?: ChangeDelta<GroceryList>[];
-  member_changes?: ChangeDelta<GroceryListMember>[];
+  grocery_list_changes?: ChangeDelta<GroceryList>[];
+  grocery_list_member_changes?: ChangeDelta<GroceryListMember>[];
   store_changes?: ChangeDelta<Store>[];
   category_changes?: ChangeDelta<Category>[];
-  store_info_changes?: ChangeDelta<GroceryItemStoreInfo>[];
+  grocery_item_store_info_changes?: ChangeDelta<GroceryItemStoreInfo>[];
 }
 
 export interface SyncResponse {
-  last_synced_at: string; // ISO 8601 string from server
-  grocery_changes?: ChangeDelta<GroceryItem>[];
-  list_changes?: ChangeDelta<GroceryList>[];
-  member_changes?: ChangeDelta<GroceryListMember>[];
-  store_changes?: ChangeDelta<Store>[];
-  category_changes?: ChangeDelta<Category>[];
-  store_info_changes?: ChangeDelta<GroceryItemStoreInfo>[];
+  server_timestamp: string; // ISO 8601 string from server
+  success_ids: string[];
+  upload_status: any[];
+  remote_todo_list_changes?: ChangeDelta[];
+  remote_todo_changes?: ChangeDelta[];
+  remote_grocery_list_changes?: ChangeDelta<GroceryList>[];
+  remote_grocery_list_member_changes?: ChangeDelta<GroceryListMember>[];
+  remote_store_changes?: ChangeDelta<Store>[];
+  remote_category_changes?: ChangeDelta<Category>[];
+  remote_grocery_changes?: ChangeDelta<GroceryItem>[];
+  remote_grocery_item_store_info_changes?: ChangeDelta<GroceryItemStoreInfo>[];
 }

@@ -11,35 +11,94 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
+import { useGrocerySync } from '@/features/sync/hooks/useGrocerySync'
+import type { GroceryItem, GroceryList, Store, Category } from '@/types/grocery'
 
 export function DashboardLayout() {
   const location = useLocation()
   const currentPath = location.pathname
 
-  // Mock list selection for feature shell (can be connected to backend)
-  const [lists] = useState([
-    { id: '1', name: 'Main Grocery List' },
-    { id: '2', name: 'Weekend BBQ' },
-    { id: '3', name: 'Office Snacks' }
-  ])
+  // Unified items state loaded from localStorage (defaults to empty)
+  const [items, setItems] = useState<GroceryItem[]>(() => {
+    const saved = localStorage.getItem('grocery_items')
+    return saved ? JSON.parse(saved) : []
+  })
+
+  // Unified lists state loaded from localStorage (defaults to empty)
+  const [lists, setLists] = useState<GroceryList[]>(() => {
+    const saved = localStorage.getItem('grocery_lists')
+    return saved ? JSON.parse(saved) : [
+      { id: '1', name: 'Main Grocery List', sync_state: 'SYNCED', version: 1, is_deleted: false, createdAt: Date.now() }
+    ]
+  })
+
+  // Unified stores state loaded from localStorage (defaults to empty)
+  const [stores, setStores] = useState<Store[]>(() => {
+    const saved = localStorage.getItem('grocery_stores')
+    return saved ? JSON.parse(saved) : []
+  })
+
+  // Unified categories state loaded from localStorage (defaults to empty)
+  const [categories, setCategories] = useState<Category[]>(() => {
+    const saved = localStorage.getItem('grocery_categories')
+    return saved ? JSON.parse(saved) : []
+  })
+
+  // Persist items locally
+  useEffect(() => {
+    localStorage.setItem('grocery_items', JSON.stringify(items))
+  }, [items])
+
+  // Persist lists locally
+  useEffect(() => {
+    localStorage.setItem('grocery_lists', JSON.stringify(lists))
+  }, [lists])
+
+  // Persist stores locally
+  useEffect(() => {
+    localStorage.setItem('grocery_stores', JSON.stringify(stores))
+  }, [stores])
+
+  // Persist categories locally
+  useEffect(() => {
+    localStorage.setItem('grocery_categories', JSON.stringify(categories))
+  }, [categories])
+
+  const { 
+    syncNow, 
+    resolveConflicts, 
+    resolveListConflicts, 
+    resolveStoreConflicts, 
+    resolveCategoryConflicts, 
+    isSyncing 
+  } = useGrocerySync()
+
   const [activeListId, setActiveListId] = useState('1')
   const [isListDropdownOpen, setIsListDropdownOpen] = useState(false)
   
-  // Sync state tracking
-  const [lastSyncedAt, setLastSyncedAt] = useState<number>(() => {
+  // Sync state tracking (stored as ISO 8601 string)
+  const [lastSyncedAt, setLastSyncedAt] = useState<string>(() => {
     const saved = localStorage.getItem('grocery_last_synced')
-    return saved ? parseInt(saved, 10) : Date.now() - 25 * 60 * 60 * 1000 // default to 25h ago (stale) to show indicator
+    return saved || new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString() // default to 25h ago (stale)
   })
   const [syncStatus, setSyncStatus] = useState<'synced' | 'stale' | 'syncing'>('stale')
   const [showSyncTooltip, setShowSyncTooltip] = useState(false)
 
-  const activeList = lists.find(l => l.id === activeListId) || lists[0]
+  const activeList = lists.find(l => l.id === activeListId) || lists[0] || { id: '1', name: 'Main Grocery List' }
+
+  // Update status when syncing triggers in background
+  useEffect(() => {
+    if (isSyncing) {
+      setSyncStatus('syncing')
+    }
+  }, [isSyncing])
 
   useEffect(() => {
     // Check if stale (> 24 hours)
     const checkStale = () => {
       const now = Date.now()
-      const diffMs = now - lastSyncedAt
+      const lastSyncedMs = Date.parse(lastSyncedAt)
+      const diffMs = now - lastSyncedMs
       const diffHours = diffMs / (1000 * 60 * 60)
       if (diffHours > 24) {
         setSyncStatus('stale')
@@ -53,23 +112,45 @@ export function DashboardLayout() {
     return () => clearInterval(interval)
   }, [lastSyncedAt])
 
-  // Triggers manual sync representation (actual hook will be used in pages)
-  const handleManualSync = () => {
-    if (syncStatus === 'syncing') return
+  // Triggers manual sync using the real syncNow hook
+  const handleManualSync = async () => {
+    if (isSyncing) return
     setSyncStatus('syncing')
     
-    // Simulate sync behavior
-    setTimeout(() => {
-      const newTimestamp = Date.now()
-      setLastSyncedAt(newTimestamp)
-      localStorage.setItem('grocery_last_synced', newTimestamp.toString())
+    try {
+      const response = await syncNow(items, lists, stores, categories)
+      if (response) {
+        const mergedItems = resolveConflicts(items, response.remote_grocery_changes)
+        setItems(mergedItems)
+
+        const mergedLists = resolveListConflicts(lists, response.remote_grocery_list_changes)
+        setLists(mergedLists)
+
+        const mergedStores = resolveStoreConflicts(stores, response.remote_store_changes)
+        setStores(mergedStores)
+
+        const mergedCategories = resolveCategoryConflicts(categories, response.remote_category_changes)
+        setCategories(mergedCategories)
+
+        setLastSyncedAt(response.server_timestamp)
+        localStorage.setItem('grocery_last_synced', response.server_timestamp)
+      }
       setSyncStatus('synced')
-    }, 1500)
+    } catch (err) {
+      console.error('[Sync] Manual sync failed:', err)
+      setSyncStatus('stale')
+    }
   }
+
+  // Trigger initial sync on mount to pull server data
+  useEffect(() => {
+    handleManualSync()
+  }, [])
 
   // Helper to format last synced text
   const getSyncedTimeString = () => {
-    const diffMin = Math.floor((Date.now() - lastSyncedAt) / 60000)
+    const lastSyncedMs = Date.parse(lastSyncedAt)
+    const diffMin = Math.floor((Date.now() - lastSyncedMs) / 60000)
     if (diffMin < 1) return 'just now'
     if (diffMin < 60) return `${diffMin}m ago`
     const diffHours = Math.floor(diffMin / 60)
@@ -196,7 +277,7 @@ export function DashboardLayout() {
 
         {/* Primary Page Outlet */}
         <main className="flex-1 overflow-y-auto px-4 py-4 scroll-smooth">
-          <Outlet context={{ activeListId, handleManualSync, syncStatus }} />
+          <Outlet context={{ activeListId, handleManualSync, syncStatus, items, setItems, lists, setLists, stores, setStores, categories, setCategories }} />
         </main>
 
         {/* Bottom Navigation Bar */}

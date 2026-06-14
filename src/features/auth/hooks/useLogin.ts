@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import api from '@/lib/axios'
 import { useAuth } from './useAuth'
-import type { LoginResponse } from '../types'
+import type { LoginResponse, User } from '../types'
+import { getUserIdFromToken, getClientUuid } from '../utils/authHelper'
 
 export function useLogin() {
   const { setAuthState } = useAuth()
@@ -12,8 +13,21 @@ export function useLogin() {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await api.post<LoginResponse>('/auth/login', { credential })
-      const { user, refresh_token } = response.data
+      const userId = getUserIdFromToken(credential)
+      const clientUuid = getClientUuid()
+
+      const response = await api.post<LoginResponse>('/auth/login', {
+        user_id: userId,
+        client_uuid: clientUuid,
+        google_auth_token: credential,
+        use_cookie: true,
+      })
+      const { user_id, email, refresh_token } = response.data
+
+      const user: User = {
+        id: user_id,
+        email: email || '',
+      }
 
       // Save credentials in local storage
       localStorage.setItem('refresh_token', refresh_token)
