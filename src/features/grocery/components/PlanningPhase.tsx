@@ -64,10 +64,12 @@ export function PlanningPhase() {
     }
   })
 
-  // Filter recommendations by selected store
-  const filteredRecs = recommendations.filter(rec => 
-    selectedStoreId === null || rec.storeId === selectedStoreId
-  )
+  // Filter recommendations by selected store, exclude items already on the list, sort by timesBought descending, and take the top 10
+  const filteredRecs = recommendations
+    .filter(rec => !plannedItems.some(pName => pName.toLowerCase() === rec.name.toLowerCase()))
+    .filter(rec => selectedStoreId === null || rec.storeId === selectedStoreId)
+    .sort((a, b) => b.timesBought - a.timesBought)
+    .slice(0, 10)
 
   const handleAddRecommendation = (itemName: string) => {
     if (addedItems[itemName]) return

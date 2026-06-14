@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { ChevronDown, CheckSquare, Square, Check, MapPin, ClipboardList } from 'lucide-react'
+import { CheckSquare, Square, Check, MapPin, ClipboardList } from 'lucide-react'
 import type { GroceryItem, Store, Category } from '@/types/grocery'
 import { cn } from '@/utils/cn'
 
@@ -28,16 +28,32 @@ export function ShoppingPhase() {
     stores: Store[]
     categories: Category[]
   }>()
-  const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null)
-  const [isStoreDropdownOpen, setIsStoreDropdownOpen] = useState(false)
+  const [selectedStoreId, setSelectedStoreId] = useState<number | null>(() => {
+    const saved = localStorage.getItem('grocery_selected_store_id')
+    return saved ? parseInt(saved, 10) : null
+  })
   const [isConfirmTripOpen, setIsConfirmTripOpen] = useState(false)
 
   const activeStores = [...(stores && stores.length > 0 ? stores : DEFAULT_STORES)]
     .filter(s => !s.is_deleted)
     .sort((a, b) => a.position - b.position)
-  const activeCategories = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES
 
-  const activeStore = activeStores.find(s => s.id === selectedStoreId)
+  // Sync selectedStoreId with localStorage
+  useEffect(() => {
+    if (selectedStoreId === null) {
+      localStorage.removeItem('grocery_selected_store_id')
+    } else {
+      localStorage.setItem('grocery_selected_store_id', selectedStoreId.toString())
+    }
+  }, [selectedStoreId])
+
+  // Clear selection if the store is deleted/missing
+  useEffect(() => {
+    if (selectedStoreId !== null && !activeStores.some(s => s.id === selectedStoreId)) {
+      setSelectedStoreId(null)
+    }
+  }, [selectedStoreId, activeStores])
+  const activeCategories = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES
 
   // Toggle "Bought" state (Moves items in cart)
   const toggleBought = (itemId: number) => {
@@ -82,55 +98,59 @@ export function ShoppingPhase() {
       acc.push({ category: cat, items: catItems })
     }
     return acc
-  }, [] as { category: typeof activeCategories[0]; items: GroceryItem[] }[])
+  }, [] as { category: Category; items: GroceryItem[] }[])
+
+  const uncategorizedToBuyItems = toBuyItems.filter(
+    item => !item.categoryId || !activeCategories.some(cat => cat.id === item.categoryId)
+  )
+
+  if (uncategorizedToBuyItems.length > 0) {
+    toBuyByCategory.push({
+      category: {
+        id: -1,
+        name: 'Uncategorized',
+        position: 999,
+        sync_state: 'SYNCED',
+        version: 1,
+        is_deleted: false
+      },
+      items: uncategorizedToBuyItems
+    })
+  }
 
   return (
     <div className="space-y-5 flex-1 flex flex-col min-h-0 animate-in fade-in duration-200">
       
       {/* Store Isolation Header */}
-      <div className="relative">
+      <div className="space-y-2">
         <label className="text-[10px] uppercase tracking-wider font-bold text-text-muted px-1 block mb-1">
           Active Store Isolation
         </label>
-        <button
-          onClick={() => setIsStoreDropdownOpen(!isStoreDropdownOpen)}
-          className="w-full flex items-center justify-between text-base font-semibold py-3 px-4 rounded-xl bg-surface-tile border border-neutral-900 active:scale-[0.99] transition-all cursor-pointer"
-        >
-          <div className="flex items-center gap-2 text-white">
-            <MapPin className="w-5 h-5 text-primary" />
-            <span>{activeStore ? activeStore.name : 'Select a store to start shopping'}</span>
-          </div>
-          <ChevronDown className="w-5 h-5 text-secondary" />
-        </button>
-
-        {isStoreDropdownOpen && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setIsStoreDropdownOpen(false)} />
-            <div className="absolute left-0 right-0 mt-2 bg-surface-tile border border-neutral-800 rounded-xl shadow-2xl z-50 py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-              {activeStores.map((store) => (
-                <button
-                  key={store.id}
-                  onClick={() => {
-                    setSelectedStoreId(store.id)
-                    setIsStoreDropdownOpen(false)
-                  }}
-                  className={cn(
-                    "w-full text-left px-5 py-3 hover:bg-neutral-800 transition-colors flex items-center gap-2",
-                    store.id === selectedStoreId ? "text-primary font-semibold" : "text-text-muted"
-                  )}
-                >
-                  <MapPin className="w-4 h-4" />
-                  {store.name}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
+        <div className="flex flex-wrap gap-2 animate-in fade-in duration-200">
+          {activeStores.map((store) => {
+            const isSelected = store.id === selectedStoreId
+            return (
+              <button
+                key={store.id}
+                onClick={() => setSelectedStoreId(isSelected ? null : store.id)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer",
+                  isSelected
+                    ? "bg-primary text-black border-primary shadow-[0_0_12px_rgba(208,188,255,0.35)]"
+                    : "bg-surface-tile border-neutral-900 hover:border-neutral-800 text-text-muted hover:text-white"
+                )}
+              >
+                <MapPin className={cn("w-3.5 h-3.5", isSelected ? "text-black" : "text-primary")} />
+                {store.name}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* Main Shopping Layout */}
       {!selectedStoreId ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 mt-12">
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 mt-12 animate-in fade-in duration-200">
           <div className="w-16 h-16 rounded-full bg-surface-tile border border-neutral-800 flex items-center justify-center text-neutral-600 mb-4">
             <ClipboardList className="w-8 h-8" />
           </div>

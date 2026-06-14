@@ -44,7 +44,7 @@ export function NeedPhase() {
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [newItemName, setNewItemName] = useState('')
   const [newItemQuantity, setNewItemQuantity] = useState('1')
-  const [newItemCategory, setNewItemCategory] = useState<number>(1)
+  const [newItemCategory, setNewItemCategory] = useState<number | undefined>(undefined)
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
   
   // Slide out delete control state per item
@@ -127,6 +127,19 @@ export function NeedPhase() {
     }))
   }
 
+  // Category updates (Sets sync_state to PENDING_UPDATE)
+  const updateCategory = (itemId: number, newCategoryId: number | undefined) => {
+    setItems(prev => prev.map(item => {
+      if (item.id !== itemId) return item
+      return {
+        ...item,
+        categoryId: newCategoryId,
+        sync_state: item.sync_state === 'PENDING_INSERT' ? 'PENDING_INSERT' : 'PENDING_UPDATE',
+        version: item.version + 1
+      }
+    }))
+  }
+
   // Item deletion (Sets is_deleted = true and sync_state to PENDING_DELETE)
   const deleteItem = (itemId: number) => {
     setItems(prev => prev.map(item => {
@@ -169,7 +182,7 @@ export function NeedPhase() {
     // Reset Form & Close bottom sheet
     setNewItemName('')
     setNewItemQuantity('1')
-    setNewItemCategory(1)
+    setNewItemCategory(undefined)
     setIsAddOpen(false)
   }
 
@@ -183,7 +196,22 @@ export function NeedPhase() {
       acc.push({ category: cat, items: catItems })
     }
     return acc;
-  }, [] as { category: typeof activeCategories[0]; items: GroceryItem[] }[])
+  }, [] as { category: { id: number; name: string; color: string }; items: GroceryItem[] }[])
+
+  const uncategorizedItems = activeItems.filter(
+    item => !item.categoryId || !activeCategories.some(cat => cat.id === item.categoryId)
+  )
+
+  if (uncategorizedItems.length > 0) {
+    itemsByCategory.push({
+      category: {
+        id: -1,
+        name: 'Uncategorized',
+        color: '#737373' // neutral gray
+      },
+      items: uncategorizedItems
+    })
+  }
 
   return (
     <div className="relative flex-1 flex flex-col min-h-0">
@@ -230,7 +258,7 @@ export function NeedPhase() {
                       onTouchEnd={handleTouchEnd}
                       className={cn(
                         "relative h-12 rounded-lg bg-surface-tile border transition-all duration-200 overflow-hidden select-none touch-pan-y",
-                        isExpanded ? "col-span-2 border-neutral-700 bg-neutral-900/40" : "border-neutral-900",
+                        isExpanded ? "col-span-2 h-[88px] border-neutral-700 bg-neutral-900/40" : "border-neutral-900",
                         isPending && !isExpanded && "border-dashed border-primary/20"
                       )}
                     >
@@ -266,42 +294,73 @@ export function NeedPhase() {
                         </div>
                       </div>
 
-                      {/* Expanded Control overlay for quantity adjust */}
+                      {/* Expanded Control overlay for quantity adjust & category select */}
                       {isExpanded && (
-                        <div className="absolute inset-0 bg-neutral-900 border-t border-neutral-800 flex items-center justify-between px-3 animate-in fade-in duration-100">
-                          {/* Close Expanded Controls */}
-                          <button 
-                            onClick={() => setExpandedItemId(null)}
-                            className="p-1.5 text-text-muted hover:text-white rounded-md hover:bg-neutral-800"
-                          >
-                            <Check className="w-4.5 h-4.5 text-primary" />
-                          </button>
-
-                          <div className="flex items-center gap-4">
-                            <span className="text-xs font-medium text-text-muted">Qty: {item.quantity}</span>
-                            <div className="flex items-center gap-1 bg-black/40 rounded-lg p-0.5 border border-neutral-800">
+                        <div className="absolute inset-0 bg-neutral-900 border-t border-neutral-800 flex flex-col justify-between p-3 animate-in fade-in duration-100">
+                          {/* Row 1: Item Name / Action buttons */}
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-sm font-semibold text-white truncate max-w-[70%]">
+                              {item.name}
+                            </span>
+                            <div className="flex items-center gap-2">
                               <button 
-                                onClick={() => updateQuantity(item.id, false)}
-                                className="p-1 text-text-muted hover:text-white hover:bg-surface-tile rounded-md active:scale-95"
+                                onClick={() => deleteItem(item.id)}
+                                className="p-1.5 text-red-400 hover:text-red-500 rounded-md hover:bg-red-950/20 active:scale-95"
+                                aria-label="Delete item"
                               >
-                                <Minus className="w-4 h-4" />
+                                <Trash2 className="w-4.5 h-4.5" />
                               </button>
                               <button 
-                                onClick={() => updateQuantity(item.id, true)}
-                                className="p-1 text-text-muted hover:text-white hover:bg-surface-tile rounded-md active:scale-95"
+                                onClick={() => setExpandedItemId(null)}
+                                className="p-1.5 text-text-muted hover:text-white rounded-md hover:bg-neutral-800 active:scale-95"
+                                aria-label="Close edit"
                               >
-                                <Plus className="w-4 h-4" />
+                                <Check className="w-4.5 h-4.5 text-primary" />
                               </button>
                             </div>
                           </div>
 
-                          <button 
-                            onClick={() => deleteItem(item.id)}
-                            className="p-1.5 text-red-400 hover:text-red-500 rounded-md hover:bg-red-950/20"
-                            aria-label="Delete item"
-                          >
-                            <Trash2 className="w-4.5 h-4.5" />
-                          </button>
+                          {/* Row 2: Category and Quantity Controls */}
+                          <div className="flex items-center justify-between gap-4 pt-2 border-t border-neutral-800/60">
+                            {/* Category Selector */}
+                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                              <span className="text-[10px] uppercase font-bold text-text-muted shrink-0">Cat:</span>
+                              <select
+                                value={item.categoryId && activeCategories.some(c => c.id === item.categoryId) ? item.categoryId : ''}
+                                onChange={(e) => {
+                                  const newCatId = e.target.value ? parseInt(e.target.value, 10) : undefined
+                                  updateCategory(item.id, newCatId)
+                                }}
+                                className="bg-black/40 border border-neutral-800 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-primary text-white w-full max-w-[130px]"
+                              >
+                                <option value="" className="bg-surface-tile text-neutral-400">Uncategorized</option>
+                                {activeCategories.map(cat => (
+                                  <option key={cat.id} value={cat.id} className="bg-surface-tile text-white">
+                                    {cat.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Quantity Controls */}
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-xs font-medium text-text-muted">Qty: {item.quantity}</span>
+                              <div className="flex items-center gap-1 bg-black/40 rounded-lg p-0.5 border border-neutral-800">
+                                <button 
+                                  onClick={() => updateQuantity(item.id, false)}
+                                  className="p-1 text-text-muted hover:text-white hover:bg-surface-tile rounded-md active:scale-95"
+                                >
+                                  <Minus className="w-3.5 h-3.5" />
+                                </button>
+                                <button 
+                                  onClick={() => updateQuantity(item.id, true)}
+                                  className="p-1 text-text-muted hover:text-white hover:bg-surface-tile rounded-md active:scale-95"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -398,10 +457,13 @@ export function NeedPhase() {
                     Category
                   </label>
                   <select
-                    value={newItemCategory}
-                    onChange={(e) => setNewItemCategory(parseInt(e.target.value, 10))}
+                    value={newItemCategory ?? ''}
+                    onChange={(e) => setNewItemCategory(e.target.value ? parseInt(e.target.value, 10) : undefined)}
                     className="w-full bg-black/40 border border-neutral-800 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary text-white"
                   >
+                    <option value="" className="bg-surface-tile text-white">
+                      Uncategorized
+                    </option>
                     {activeCategories.map(cat => (
                       <option key={cat.id} value={cat.id} className="bg-surface-tile text-white">
                         {cat.name}
