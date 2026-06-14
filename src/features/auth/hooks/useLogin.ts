@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import api from '@/lib/axios'
 import { useAuth } from './useAuth'
+import { storage } from '@/utils/storage'
+import { STORAGE_KEYS } from '@/config/storageKeys'
 import type { LoginResponse, User } from '../types'
 import { getUserIdFromToken, getClientUuid } from '../utils/authHelper'
 
@@ -30,8 +32,8 @@ export function useLogin() {
       }
 
       // Save credentials in local storage
-      localStorage.setItem('refresh_token', refresh_token)
-      localStorage.setItem('user_info', JSON.stringify(user))
+      storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh_token)
+      storage.setItem(STORAGE_KEYS.USER_INFO, user)
 
       // Update global context state
       setAuthState({
@@ -40,11 +42,11 @@ export function useLogin() {
       })
 
       return user
-    } catch (err: any) {
+    } catch (err: unknown) {
       const apiError =
         err instanceof Error
           ? err
-          : new Error(err?.response?.data?.message || 'Authentication exchange failed.')
+          : new Error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Authentication exchange failed.')
       setError(apiError)
       throw apiError
     } finally {

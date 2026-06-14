@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLogin } from '../hooks/useLogin'
+import { env } from '@/config/env'
 
 interface GoogleIdCredentialResponse {
   credential?: string
@@ -40,13 +41,12 @@ export function LoginForm() {
   const { loginWithGoogle, isLoading, error } = useLogin()
   const navigate = useNavigate()
   const buttonRef = useRef<HTMLDivElement>(null)
-  const [scriptLoaded, setScriptLoaded] = useState(false)
+  const [scriptLoaded, setScriptLoaded] = useState(() => !!window.google?.accounts?.id)
   const [gsiError, setGsiError] = useState<string | null>(null)
 
   useEffect(() => {
     // Check if script is already present
     if (window.google?.accounts?.id) {
-      setScriptLoaded(true)
       return
     }
 
@@ -54,6 +54,7 @@ export function LoginForm() {
     script.src = 'https://accounts.google.com/gsi/client'
     script.async = true
     script.defer = true
+    script.id = 'gsi-client-script'
     script.onload = () => {
       setScriptLoaded(true)
     }
@@ -61,6 +62,13 @@ export function LoginForm() {
       setGsiError('Failed to load Google Identity Services SDK.')
     }
     document.body.appendChild(script)
+
+    return () => {
+      const addedScript = document.getElementById('gsi-client-script')
+      if (addedScript) {
+        addedScript.remove()
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -68,7 +76,7 @@ export function LoginForm() {
       return
     }
 
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'dummy-client-id.apps.googleusercontent.com'
+    const clientId = env.GOOGLE_CLIENT_ID
 
     try {
       window.google.accounts.id.initialize({
@@ -96,9 +104,10 @@ export function LoginForm() {
       })
     } catch (err: unknown) {
       console.error('Failed to initialize Google Login button:', err)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setGsiError('Failed to initialize Google Login button.')
     }
-  }, [scriptLoaded, loginWithGoogle])
+  }, [scriptLoaded, loginWithGoogle, navigate])
 
   return (
     <div className="flex flex-col items-center justify-center gap-4 w-full">

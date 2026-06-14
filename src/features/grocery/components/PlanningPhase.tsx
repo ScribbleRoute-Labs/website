@@ -1,30 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { Plus, Check, MapPin, Sparkles, AlertCircle } from 'lucide-react'
 import type { Store, GroceryItem, Category } from '@/types/grocery'
 import { cn } from '@/utils/cn'
-
-// Default fallback stores list
-const DEFAULT_STORES: Store[] = [
-  { id: 1, name: 'Trader Joe\'s', position: 1, isDefaultSupported: true, sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 2, name: 'Whole Foods', position: 2, isDefaultSupported: false, sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 3, name: 'Costco', position: 3, isDefaultSupported: false, sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 4, name: 'Local Farmers Market', position: 4, isDefaultSupported: false, sync_state: 'SYNCED', version: 1, is_deleted: false },
-]
-
-// Default fallback recommendations catalog
-const DEFAULT_RECOMMENDATIONS = [
-  { name: 'Organic Eggs', categoryId: 2, storeId: 1, timesBought: 45 },
-  { name: 'Avocados', categoryId: 1, storeId: 1, timesBought: 38 },
-  { name: 'Greek Yogurt', categoryId: 2, storeId: 2, timesBought: 29 },
-  { name: 'Almond Butter', categoryId: 4, storeId: 2, timesBought: 18 },
-  { name: 'Salmon Fillet', categoryId: 5, storeId: 3, timesBought: 22 },
-  { name: 'Sourdough Loaf', categoryId: 3, storeId: 1, timesBought: 17 },
-  { name: 'Rotisserie Chicken', categoryId: 5, storeId: 3, timesBought: 31 },
-  { name: 'Organic Spinach', categoryId: 1, storeId: 2, timesBought: 26 },
-  { name: 'Local Strawberries', categoryId: 1, storeId: 4, timesBought: 12 },
-  { name: 'Artisanal Honey', categoryId: 4, storeId: 4, timesBought: 9 },
-]
+import { DEFAULT_STORES, DEFAULT_RECOMMENDATIONS } from '../config/constants'
 
 export function PlanningPhase() {
   const { items, setItems, stores } = useOutletContext<{
@@ -36,6 +15,15 @@ export function PlanningPhase() {
 
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(1) // Default to Trader Joe's
   const [addedItems, setAddedItems] = useState<Record<string, boolean>>({})
+  const timeoutRefs = useRef<Record<string, number>>({})
+
+  // Cleanup all pending timeouts on unmount safely
+  useEffect(() => {
+    const currentTimeouts = timeoutRefs.current
+    return () => {
+      Object.values(currentTimeouts).forEach(clearTimeout)
+    }
+  }, [])
   
   const activeStores = [...(stores && stores.length > 0 ? stores : DEFAULT_STORES)]
     .filter(s => !s.is_deleted)
@@ -71,7 +59,7 @@ export function PlanningPhase() {
     .sort((a, b) => b.timesBought - a.timesBought)
     .slice(0, 10)
 
-  const handleAddRecommendation = (itemName: string) => {
+  const handleAddRecommendation = useCallback((itemName: string) => {
     if (addedItems[itemName]) return
 
     setAddedItems(prev => ({ ...prev, [itemName]: true }))
@@ -95,11 +83,13 @@ export function PlanningPhase() {
 
     setItems(prev => [...prev, newItem])
     
-    // Auto-clear added state checkmark after 2 seconds
-    setTimeout(() => {
+    // Auto-clear added state checkmark after 2 seconds safely
+    const timer = setTimeout(() => {
       setAddedItems(prev => ({ ...prev, [itemName]: false }))
+      delete timeoutRefs.current[itemName]
     }, 2000)
-  }
+    timeoutRefs.current[itemName] = timer as unknown as number
+  }, [addedItems, items.length, setItems])
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">

@@ -1,8 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { Database, RefreshCw, Trash2, ShieldAlert, HardDrive, Wifi } from 'lucide-react'
+import { Database, RefreshCw, Trash2, ShieldAlert, HardDrive, Wifi, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import type { GroceryItem, GroceryList, Store, Category } from '@/types/grocery'
+import { storage } from '@/utils/storage'
+import { STORAGE_KEYS } from '@/config/storageKeys'
+import { setApiBaseUrl } from '@/lib/axios'
+import { env } from '@/config/env'
 
 export function SettingsPhase() {
   const { items, lists, stores, categories } = useOutletContext<{
@@ -13,8 +17,22 @@ export function SettingsPhase() {
   }>()
 
   const [syncInterval, setSyncInterval] = useState('auto')
-  const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_BASE_URL || '/api')
+  const [apiUrl, setApiUrl] = useState(() => {
+    return storage.getItem<string>(STORAGE_KEYS.API_BASE_URL, env.API_BASE_URL)
+  })
   const [clearing, setClearing] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  const timeoutId = useRef<number | null>(null)
+  const reloadTimeoutId = useRef<number | null>(null)
+
+  // Clear timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutId.current !== null) clearTimeout(timeoutId.current)
+      if (reloadTimeoutId.current !== null) clearTimeout(reloadTimeoutId.current)
+    }
+  }, [])
 
   const pendingChanges = 
     (items || []).filter(i => i.sync_state !== 'SYNCED').length +
@@ -28,23 +46,52 @@ export function SettingsPhase() {
     (stores || []).length +
     (categories || []).length
 
+  const showToast = (msg: string) => {
+    setSuccessMessage(msg)
+    if (timeoutId.current !== null) clearTimeout(timeoutId.current)
+    timeoutId.current = setTimeout(() => {
+      setSuccessMessage(null)
+      timeoutId.current = null
+    }, 3000) as unknown as number
+  }
+
+  const handleSaveApiUrl = (newUrl: string) => {
+    setApiUrl(newUrl)
+    storage.setItem(STORAGE_KEYS.API_BASE_URL, newUrl)
+    setApiBaseUrl(newUrl)
+    showToast('API Base URL configuration updated.')
+  }
+
   const handleClearLocal = () => {
     setClearing(true)
-    setTimeout(() => {
-      localStorage.removeItem('grocery_items')
-      localStorage.removeItem('grocery_lists')
-      localStorage.removeItem('grocery_stores')
-      localStorage.removeItem('grocery_categories')
-      localStorage.removeItem('grocery_last_synced')
+    if (timeoutId.current !== null) clearTimeout(timeoutId.current)
+    timeoutId.current = setTimeout(() => {
+      storage.removeItem(STORAGE_KEYS.ITEMS)
+      storage.removeItem(STORAGE_KEYS.LISTS)
+      storage.removeItem(STORAGE_KEYS.STORES)
+      storage.removeItem(STORAGE_KEYS.CATEGORIES)
+      storage.removeItem(STORAGE_KEYS.LAST_SYNCED)
       setClearing(false)
-      alert('Local caching storage cleared successfully.')
-      window.location.reload()
-    }, 1000)
+      showToast('Local cache cleared successfully. Reloading...')
+      
+      // Delay reload to let user see success toast
+      reloadTimeoutId.current = setTimeout(() => {
+        window.location.reload()
+      }, 1500) as unknown as number
+    }, 1000) as unknown as number
   }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       
+      {/* Premium Success Toast */}
+      {successMessage && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-neutral-900/90 backdrop-blur-md border border-emerald-500/30 text-emerald-400 text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
+          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+          <span className="font-semibold">{successMessage}</span>
+        </div>
+      )}
+
       {/* Synchronization Engine Section */}
       <div className="space-y-3">
         <div className="flex items-center gap-2 px-1">
@@ -95,7 +142,7 @@ export function SettingsPhase() {
             <input
               type="text"
               value={apiUrl}
-              onChange={(e) => setApiUrl(e.target.value)}
+              onChange={(e) => handleSaveApiUrl(e.target.value)}
               className="w-full bg-black/40 border border-neutral-800 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-primary text-white font-mono"
             />
           </div>

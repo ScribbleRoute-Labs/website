@@ -1,19 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import type { TouchEvent, FormEvent } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { Plus, Minus, Trash2, Check, Sparkles, X, ShoppingBag } from 'lucide-react'
 import type { GroceryItem, Category } from '@/types/grocery'
 import { cn } from '@/utils/cn'
 
-// Default fallback categories
-const DEFAULT_CATEGORIES = [
-  { id: 1, name: 'Produce', color: '#8ADEAD' },
-  { id: 2, name: 'Dairy & Eggs', color: '#FFD97D' },
-  { id: 3, name: 'Bakery', color: '#FF9B85' },
-  { id: 4, name: 'Pantry', color: '#90E0EF' },
-  { id: 5, name: 'Meat & Seafood', color: '#EE6C4D' },
-  { id: 6, name: 'Frozen', color: '#C18C5D' },
-]
+import { DEFAULT_CATEGORIES, CATEGORY_COLORS } from '../config/constants'
 
 // Common suggestion names for autocomplete
 const SUGGESTIONS = [
@@ -30,22 +22,16 @@ export function NeedPhase() {
     categories: Category[]
   }>()
 
-  const activeCategories = categories && categories.length > 0
-    ? categories.map(cat => {
-        const fallback = DEFAULT_CATEGORIES.find(d => d.id === cat.id)
-        return {
-          id: cat.id,
-          name: cat.name,
-          color: fallback?.color || '#C18C5D'
-        }
-      })
-    : DEFAULT_CATEGORIES
+  const activeCategories = (categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES).map(cat => ({
+    id: cat.id,
+    name: cat.name,
+    color: CATEGORY_COLORS[cat.id] || '#737373'
+  }))
   const [expandedItemId, setExpandedItemId] = useState<number | null>(null)
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [newItemName, setNewItemName] = useState('')
   const [newItemQuantity, setNewItemQuantity] = useState('1')
   const [newItemCategory, setNewItemCategory] = useState<number | undefined>(undefined)
-  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
   
   // Slide out delete control state per item
   const [swipeDeleteId, setSwipeDeleteId] = useState<number | null>(null)
@@ -54,18 +40,13 @@ export function NeedPhase() {
   const touchStartX = useRef<number | null>(null)
   const touchCurrentX = useRef<number | null>(null)
 
-  // Suggestion filtering
-  useEffect(() => {
-    if (!newItemName.trim()) {
-      setFilteredSuggestions([])
-      return
-    }
-    const query = newItemName.toLowerCase()
-    const matches = SUGGESTIONS.filter(
-      s => s.toLowerCase().includes(query) && s.toLowerCase() !== query
-    ).slice(0, 4)
-    setFilteredSuggestions(matches)
-  }, [newItemName])
+  // Suggestion filtering (derived during render)
+  const query = newItemName.trim().toLowerCase()
+  const filteredSuggestions = query
+    ? SUGGESTIONS.filter(
+        s => s.toLowerCase().includes(query) && s.toLowerCase() !== query
+      ).slice(0, 4)
+    : []
 
   // Tap-to-toggle details & controls
   const handleTileClick = (itemId: number) => {
@@ -77,7 +58,7 @@ export function NeedPhase() {
   }
 
   // Handle Swipe Interactions
-  const handleTouchStart = (e: TouchEvent, _itemId: number) => {
+  const handleTouchStart = (e: TouchEvent) => {
     touchStartX.current = e.touches[0].clientX
     touchCurrentX.current = e.touches[0].clientX
   }
@@ -106,7 +87,7 @@ export function NeedPhase() {
       if (item.id !== itemId) return item
       
       const currentQty = parseInt(item.quantity, 10)
-      let nextQtyStr = item.quantity
+      let nextQtyStr: string
       
       if (!isNaN(currentQty)) {
         const nextQty = increment ? currentQty + 1 : Math.max(1, currentQty - 1)
@@ -253,7 +234,7 @@ export function NeedPhase() {
                   return (
                     <div
                       key={item.id}
-                      onTouchStart={(e) => handleTouchStart(e, item.id)}
+                      onTouchStart={(e) => handleTouchStart(e)}
                       onTouchMove={(e) => handleTouchMove(e, item.id)}
                       onTouchEnd={handleTouchEnd}
                       className={cn(
@@ -428,7 +409,6 @@ export function NeedPhase() {
                       type="button"
                       onClick={() => {
                         setNewItemName(suggestion)
-                        setFilteredSuggestions([])
                       }}
                       className="text-xs bg-neutral-900 border border-neutral-800 hover:border-primary text-text-muted hover:text-primary rounded-full px-3 py-1 transition-all"
                     >

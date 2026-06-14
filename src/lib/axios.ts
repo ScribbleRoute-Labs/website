@@ -1,10 +1,19 @@
 import axios from 'axios'
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
+import { env } from '@/config/env'
+import { storage } from '@/utils/storage'
+import { STORAGE_KEYS } from '@/config/storageKeys'
+import { getClientUuid } from '@/utils/uuid'
 
-// Resolve the API base URL from Vite environment variables or default to '/api' in development
-const baseURL = import.meta.env.DEV 
-  ? '' 
-  : (import.meta.env.VITE_API_BASE_URL || 'https://api-rust.teddy.fyi')
+// Resolve initial API base URL from storage, env, or default
+const getInitialBaseURL = (): string => {
+  const savedUrl = storage.getItem<string>(STORAGE_KEYS.API_BASE_URL, '')
+  if (savedUrl) return savedUrl
+  
+  return env.isDev ? '' : env.API_BASE_URL
+}
+
+const baseURL = getInitialBaseURL()
 
 export const api = axios.create({
   baseURL,
@@ -25,6 +34,14 @@ const refreshApi = axios.create({
   timeout: 10000,
 })
 
+/**
+ * Dynamically updates the API base URL at runtime.
+ */
+export function setApiBaseUrl(newUrl: string): void {
+  api.defaults.baseURL = newUrl
+  refreshApi.defaults.baseURL = newUrl
+}
+
 type UnauthorizedCallback = () => void
 let unauthorizedListener: UnauthorizedCallback | null = null
 
@@ -33,7 +50,7 @@ export function registerUnauthorizedListener(callback: UnauthorizedCallback) {
 }
 
 function triggerUnauthorized() {
-  localStorage.removeItem('refresh_token')
+  storage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
   if (unauthorizedListener) {
     unauthorizedListener()
   } else {
@@ -59,16 +76,10 @@ const processQueue = (error: unknown) => {
   failedQueue = []
 }
 
-// Request interceptor (can be used for additional headers if needed)
+// Request interceptor
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    let clientUuid = localStorage.getItem('grocery_client_id')
-    if (!clientUuid) {
-      clientUuid = typeof crypto !== 'undefined' && crypto.randomUUID 
-        ? crypto.randomUUID() 
-        : Math.random().toString(36).substring(2) + Date.now().toString(36)
-      localStorage.setItem('grocery_client_id', clientUuid)
-    }
+    const clientUuid = getClientUuid()
     config.headers['X-Client-UUID'] = clientUuid
     return config
   },
@@ -94,7 +105,7 @@ api.interceptors.response.use(
         return Promise.reject(error)
       }
 
-      const refreshToken = localStorage.getItem('refresh_token')
+      const refreshToken = storage.getItem<string>(STORAGE_KEYS.REFRESH_TOKEN, '')
       if (!refreshToken) {
         triggerUnauthorized()
         return Promise.reject(error)
@@ -116,17 +127,9 @@ api.interceptors.response.use(
       isRefreshing = true
 
       try {
-        const storedUser = localStorage.getItem('user_info')
-        const user = storedUser ? JSON.parse(storedUser) : null
+        const user = storage.getItem<{ id: string } | null>(STORAGE_KEYS.USER_INFO, null)
         const userId = user?.id || ''
-        
-        let clientUuid = localStorage.getItem('grocery_client_id')
-        if (!clientUuid) {
-          clientUuid = typeof crypto !== 'undefined' && crypto.randomUUID 
-            ? crypto.randomUUID() 
-            : Math.random().toString(36).substring(2) + Date.now().toString(36)
-          localStorage.setItem('grocery_client_id', clientUuid)
-        }
+        const clientUuid = getClientUuid()
 
         const response = await refreshApi.post<{ refresh_token: string }>('/auth/refresh', {
           user_id: userId,
@@ -136,7 +139,7 @@ api.interceptors.response.use(
         })
         
         const newRefreshToken = response.data.refresh_token
-        localStorage.setItem('refresh_token', newRefreshToken)
+        storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken)
 
         processQueue(null)
         isRefreshing = false
@@ -155,4 +158,3 @@ api.interceptors.response.use(
 )
 
 export default api
-

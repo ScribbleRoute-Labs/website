@@ -20,16 +20,4 @@ export function getUserIdFromToken(token: string): string {
   }
 }
 
-/**
- * Gets or generates a stable client UUID for synchronization and authentication.
- */
-export function getClientUuid(): string {
-  let id = localStorage.getItem('grocery_client_id')
-  if (!id) {
-    id = typeof crypto !== 'undefined' && crypto.randomUUID 
-      ? crypto.randomUUID() 
-      : Math.random().toString(36).substring(2) + Date.now().toString(36)
-    localStorage.setItem('grocery_client_id', id)
-  }
-  return id
-}
+export { getClientUuid } from '@/utils/uuid'

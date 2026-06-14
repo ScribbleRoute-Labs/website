@@ -1,5 +1,8 @@
 import { useState, useCallback, useRef } from 'react'
 import api from '@/lib/axios'
+import { storage } from '@/utils/storage'
+import { STORAGE_KEYS } from '@/config/storageKeys'
+import { getClientUuid } from '@/utils/uuid'
 import type { 
   GroceryItem, 
   GroceryList,
@@ -13,7 +16,7 @@ import type {
 interface UseGrocerySyncOptions {
   clientId?: string
   onSyncSuccess?: (response: SyncResponse) => void
-  onSyncError?: (error: any) => void
+  onSyncError?: (error: Error) => void
 }
 
 export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
@@ -21,16 +24,9 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
   const [error, setError] = useState<Error | null>(null)
   
   // Client Identifier (saved or generated)
-  const clientId = useRef<string>('')
-  if (!clientId.current) {
-    let id = localStorage.getItem('grocery_client_id')
-    if (!id) {
-      id = typeof crypto !== 'undefined' && crypto.randomUUID 
-        ? crypto.randomUUID() 
-        : Math.random().toString(36).substring(2) + Date.now().toString(36)
-      localStorage.setItem('grocery_client_id', id)
-    }
-    clientId.current = id
+  const clientId = useRef<string | null>(null)
+  if (clientId.current === null) {
+    clientId.current = getClientUuid()
   }
 
   // Core Sync Trigger
@@ -44,7 +40,7 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
     setError(null)
 
     try {
-      const lastSyncedAt = localStorage.getItem('grocery_last_synced') || new Date(0).toISOString()
+      const lastSyncedAt = storage.getItem<string>(STORAGE_KEYS.LAST_SYNCED, '') || new Date(0).toISOString()
       
       // 1. Check KV status change flag to minimize payload size and query costs.
       // Default to true (pull data) if the endpoint returns 404 or fails.
@@ -57,9 +53,10 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
           }
         })
         hasRemoteChanges = checkRes.data.hasChanges
-      } catch (err: any) {
+      } catch (err: unknown) {
         // Fallback: If 404 (or other status) is returned, assume remote has changes to fetch silently
-        if (err.response?.status === 404) {
+        const errorResponse = (err as { response?: { status?: number } }).response
+        if (errorResponse?.status === 404) {
           console.warn('[Sync] Status endpoint returned 404. Proceeding with full payload sync fallback.')
         } else {
           console.error('[Sync] Status check failed. Falling back to full sync.', err)
@@ -145,7 +142,7 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
       // 3. Construct synchronization protocol payload
       const syncRequest: SyncRequest = {
         last_synced_at: lastSyncedAt,
-        client_id: clientId.current,
+        client_id: clientId.current || '',
         scope: 'GROCERY',
         grocery_changes: groceryChanges,
         grocery_list_changes: listChanges,
@@ -158,7 +155,7 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
       const syncResponse = response.data
 
       // 5. Update local tracking states
-      localStorage.setItem('grocery_last_synced', syncResponse.server_timestamp)
+      storage.setItem(STORAGE_KEYS.LAST_SYNCED, syncResponse.server_timestamp)
       
       if (options.onSyncSuccess) {
         options.onSyncSuccess(syncResponse)
@@ -167,9 +164,9 @@ export function useGrocerySync(options: UseGrocerySyncOptions = {}) {
       setIsSyncing(false)
       return syncResponse
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[Sync] Fatal sync execution error:', err)
-      const errorObj = err instanceof Error ? err : new Error(err.message || 'Sync failed')
+      const errorObj = err instanceof Error ? err : new Error((err as { message?: string }).message || 'Sync failed')
       setError(errorObj)
       setIsSyncing(false)
       

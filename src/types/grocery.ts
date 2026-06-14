@@ -77,7 +77,7 @@ export interface GroceryItemStoreInfo {
 
 export type ChangeDeltaType = 'INSERT' | 'UPDATE' | 'DELETE';
 
-export interface ChangeDelta<T = any> {
+export interface ChangeDelta<T = unknown> {
   id: number | string;
   type: ChangeDeltaType;
   version: number;
@@ -101,7 +101,7 @@ export interface SyncRequest {
 export interface SyncResponse {
   server_timestamp: string; // ISO 8601 string from server
   success_ids: string[];
-  upload_status: any[];
+  upload_status: unknown[];
   remote_todo_list_changes?: ChangeDelta[];
   remote_todo_changes?: ChangeDelta[];
   remote_grocery_list_changes?: ChangeDelta<GroceryList>[];

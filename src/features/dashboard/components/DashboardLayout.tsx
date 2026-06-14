@@ -13,55 +13,54 @@ import {
 import { cn } from '@/utils/cn'
 import { useGrocerySync } from '@/features/sync/hooks/useGrocerySync'
 import type { GroceryItem, GroceryList, Store, Category } from '@/types/grocery'
+import { storage } from '@/utils/storage'
+import { STORAGE_KEYS } from '@/config/storageKeys'
+import { getSyncedTimeString } from '@/utils/date'
 
 export function DashboardLayout() {
   const location = useLocation()
   const currentPath = location.pathname
 
-  // Unified items state loaded from localStorage (defaults to empty)
+  // Unified items state loaded from storage (defaults to empty)
   const [items, setItems] = useState<GroceryItem[]>(() => {
-    const saved = localStorage.getItem('grocery_items')
-    return saved ? JSON.parse(saved) : []
+    return storage.getItem<GroceryItem[]>(STORAGE_KEYS.ITEMS, [])
   })
 
-  // Unified lists state loaded from localStorage (defaults to empty)
+  // Unified lists state loaded from storage (defaults to empty)
   const [lists, setLists] = useState<GroceryList[]>(() => {
-    const saved = localStorage.getItem('grocery_lists')
-    return saved ? JSON.parse(saved) : [
+    return storage.getItem<GroceryList[]>(STORAGE_KEYS.LISTS, [
       { id: '1', name: 'Main Grocery List', sync_state: 'SYNCED', version: 1, is_deleted: false, createdAt: Date.now() }
-    ]
+    ])
   })
 
-  // Unified stores state loaded from localStorage (defaults to empty)
+  // Unified stores state loaded from storage (defaults to empty)
   const [stores, setStores] = useState<Store[]>(() => {
-    const saved = localStorage.getItem('grocery_stores')
-    return saved ? JSON.parse(saved) : []
+    return storage.getItem<Store[]>(STORAGE_KEYS.STORES, [])
   })
 
-  // Unified categories state loaded from localStorage (defaults to empty)
+  // Unified categories state loaded from storage (defaults to empty)
   const [categories, setCategories] = useState<Category[]>(() => {
-    const saved = localStorage.getItem('grocery_categories')
-    return saved ? JSON.parse(saved) : []
+    return storage.getItem<Category[]>(STORAGE_KEYS.CATEGORIES, [])
   })
 
   // Persist items locally
   useEffect(() => {
-    localStorage.setItem('grocery_items', JSON.stringify(items))
+    storage.setItem(STORAGE_KEYS.ITEMS, items)
   }, [items])
 
   // Persist lists locally
   useEffect(() => {
-    localStorage.setItem('grocery_lists', JSON.stringify(lists))
+    storage.setItem(STORAGE_KEYS.LISTS, lists)
   }, [lists])
 
   // Persist stores locally
   useEffect(() => {
-    localStorage.setItem('grocery_stores', JSON.stringify(stores))
+    storage.setItem(STORAGE_KEYS.STORES, stores)
   }, [stores])
 
   // Persist categories locally
   useEffect(() => {
-    localStorage.setItem('grocery_categories', JSON.stringify(categories))
+    storage.setItem(STORAGE_KEYS.CATEGORIES, categories)
   }, [categories])
 
   const { 
@@ -78,44 +77,31 @@ export function DashboardLayout() {
   
   // Sync state tracking (stored as ISO 8601 string)
   const [lastSyncedAt, setLastSyncedAt] = useState<string>(() => {
-    const saved = localStorage.getItem('grocery_last_synced')
+    const saved = storage.getItem<string>(STORAGE_KEYS.LAST_SYNCED, '')
     return saved || new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString() // default to 25h ago (stale)
   })
-  const [syncStatus, setSyncStatus] = useState<'synced' | 'stale' | 'syncing'>('stale')
   const [showSyncTooltip, setShowSyncTooltip] = useState(false)
 
   const activeList = lists.find(l => l.id === activeListId) || lists[0] || { id: '1', name: 'Main Grocery List' }
 
-  // Update status when syncing triggers in background
-  useEffect(() => {
-    if (isSyncing) {
-      setSyncStatus('syncing')
-    }
-  }, [isSyncing])
+  // Derive syncStatus dynamically to avoid state synchronization side effects
+  const isStale = (() => {
+    const lastSyncedMs = Date.parse(lastSyncedAt)
+    if (isNaN(lastSyncedMs)) return true
+    // eslint-disable-next-line react-hooks/purity
+    const diffHours = (Date.now() - lastSyncedMs) / (1000 * 60 * 60)
+    return diffHours > 24
+  })()
 
-  useEffect(() => {
-    // Check if stale (> 24 hours)
-    const checkStale = () => {
-      const now = Date.now()
-      const lastSyncedMs = Date.parse(lastSyncedAt)
-      const diffMs = now - lastSyncedMs
-      const diffHours = diffMs / (1000 * 60 * 60)
-      if (diffHours > 24) {
-        setSyncStatus('stale')
-      } else {
-        setSyncStatus('synced')
-      }
-    }
-
-    checkStale()
-    const interval = setInterval(checkStale, 60000) // check every minute
-    return () => clearInterval(interval)
-  }, [lastSyncedAt])
+  const syncStatus: 'syncing' | 'stale' | 'synced' = isSyncing
+    ? 'syncing'
+    : isStale
+      ? 'stale'
+      : 'synced'
 
   // Triggers manual sync using the real syncNow hook
   const handleManualSync = async () => {
     if (isSyncing) return
-    setSyncStatus('syncing')
     
     try {
       const response = await syncNow(items, lists, stores, categories)
@@ -133,30 +119,21 @@ export function DashboardLayout() {
         setCategories(mergedCategories)
 
         setLastSyncedAt(response.server_timestamp)
-        localStorage.setItem('grocery_last_synced', response.server_timestamp)
+        storage.setItem(STORAGE_KEYS.LAST_SYNCED, response.server_timestamp)
       }
-      setSyncStatus('synced')
     } catch (err) {
       console.error('[Sync] Manual sync failed:', err)
-      setSyncStatus('stale')
     }
   }
 
   // Trigger initial sync on mount to pull server data
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     handleManualSync()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Helper to format last synced text
-  const getSyncedTimeString = () => {
-    const lastSyncedMs = Date.parse(lastSyncedAt)
-    const diffMin = Math.floor((Date.now() - lastSyncedMs) / 60000)
-    if (diffMin < 1) return 'just now'
-    if (diffMin < 60) return `${diffMin}m ago`
-    const diffHours = Math.floor(diffMin / 60)
-    if (diffHours < 24) return `${diffHours}h ago`
-    return `${Math.floor(diffHours / 24)}d ago`
-  }
+
 
   const navItems = [
     {
@@ -267,7 +244,7 @@ export function DashboardLayout() {
                       </>
                     )}
                   </div>
-                  <p>Last synced: {getSyncedTimeString()}</p>
+                  <p>Last synced: {getSyncedTimeString(lastSyncedAt)}</p>
                   <p className="mt-1 text-[10px] text-neutral-500">Tap icon to force upload/download changes.</p>
                 </div>
               )}

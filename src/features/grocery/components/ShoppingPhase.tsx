@@ -3,23 +3,9 @@ import { useOutletContext } from 'react-router-dom'
 import { CheckSquare, Square, Check, MapPin, ClipboardList } from 'lucide-react'
 import type { GroceryItem, Store, Category } from '@/types/grocery'
 import { cn } from '@/utils/cn'
-
-// Default fallback stores list
-const DEFAULT_STORES: Store[] = [
-  { id: 1, name: 'Trader Joe\'s', position: 1, isDefaultSupported: true, sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 2, name: 'Whole Foods', position: 2, isDefaultSupported: false, sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 3, name: 'Costco', position: 3, isDefaultSupported: false, sync_state: 'SYNCED', version: 1, is_deleted: false },
-]
-
-// Default fallback categories
-const DEFAULT_CATEGORIES: Category[] = [
-  { id: 1, name: 'Produce', position: 1, sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 2, name: 'Dairy & Eggs', position: 2, sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 3, name: 'Bakery', position: 3, sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 4, name: 'Pantry', position: 4, sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 5, name: 'Meat & Seafood', position: 5, sync_state: 'SYNCED', version: 1, is_deleted: false },
-  { id: 6, name: 'Frozen', position: 6, sync_state: 'SYNCED', version: 1, is_deleted: false },
-]
+import { DEFAULT_STORES, DEFAULT_CATEGORIES } from '../config/constants'
+import { storage } from '@/utils/storage'
+import { STORAGE_KEYS } from '@/config/storageKeys'
 
 export function ShoppingPhase() {
   const { items, setItems, stores, categories } = useOutletContext<{
@@ -29,8 +15,7 @@ export function ShoppingPhase() {
     categories: Category[]
   }>()
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(() => {
-    const saved = localStorage.getItem('grocery_selected_store_id')
-    return saved ? parseInt(saved, 10) : null
+    return storage.getItem<number | null>(STORAGE_KEYS.SELECTED_STORE_ID, null)
   })
   const [isConfirmTripOpen, setIsConfirmTripOpen] = useState(false)
 
@@ -38,21 +23,19 @@ export function ShoppingPhase() {
     .filter(s => !s.is_deleted)
     .sort((a, b) => a.position - b.position)
 
-  // Sync selectedStoreId with localStorage
+  // Sync selectedStoreId with storage
   useEffect(() => {
     if (selectedStoreId === null) {
-      localStorage.removeItem('grocery_selected_store_id')
+      storage.removeItem(STORAGE_KEYS.SELECTED_STORE_ID)
     } else {
-      localStorage.setItem('grocery_selected_store_id', selectedStoreId.toString())
+      storage.setItem(STORAGE_KEYS.SELECTED_STORE_ID, selectedStoreId)
     }
   }, [selectedStoreId])
 
   // Clear selection if the store is deleted/missing
-  useEffect(() => {
-    if (selectedStoreId !== null && !activeStores.some(s => s.id === selectedStoreId)) {
-      setSelectedStoreId(null)
-    }
-  }, [selectedStoreId, activeStores])
+  if (selectedStoreId !== null && !activeStores.some(s => s.id === selectedStoreId)) {
+    setSelectedStoreId(null)
+  }
   const activeCategories = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES
 
   // Toggle "Bought" state (Moves items in cart)

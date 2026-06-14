@@ -2,6 +2,9 @@ import { createContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import api, { registerUnauthorizedListener } from '@/lib/axios'
 import type { User, AuthState } from '../types'
+import { storage } from '@/utils/storage'
+import { STORAGE_KEYS } from '@/config/storageKeys'
+import { getClientUuid } from '@/utils/uuid'
 
 export interface AuthContextType {
   isAuthenticated: boolean
@@ -11,6 +14,7 @@ export interface AuthContextType {
   logout: () => Promise<void>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 interface AuthProviderProps {
@@ -34,7 +38,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Session bootstrapping on app mount
   useEffect(() => {
     async function bootstrapSession() {
-      const refreshToken = localStorage.getItem('refresh_token')
+      const refreshToken = storage.getItem<string>(STORAGE_KEYS.REFRESH_TOKEN, '')
       if (!refreshToken) {
         setAuthStateInternal({
           isAuthenticated: false,
@@ -45,17 +49,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       try {
-        const storedUser = localStorage.getItem('user_info')
-        const user = storedUser ? JSON.parse(storedUser) : null
+        const user = storage.getItem<User | null>(STORAGE_KEYS.USER_INFO, null)
         const userId = user?.id || ''
-        
-        let clientUuid = localStorage.getItem('grocery_client_id')
-        if (!clientUuid) {
-          clientUuid = typeof crypto !== 'undefined' && crypto.randomUUID 
-            ? crypto.randomUUID() 
-            : Math.random().toString(36).substring(2) + Date.now().toString(36)
-          localStorage.setItem('grocery_client_id', clientUuid)
-        }
+        const clientUuid = getClientUuid()
 
         // Exchange refresh token for a fresh session cookie
         const response = await api.post<{ refresh_token: string }>('/auth/refresh', {
@@ -66,7 +62,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         })
 
         // Store new refresh token
-        localStorage.setItem('refresh_token', response.data.refresh_token)
+        storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.data.refresh_token)
 
         setAuthStateInternal({
           isAuthenticated: true,
@@ -75,8 +71,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         })
       } catch (error) {
         console.error('Session bootstrapping failed:', error)
-        localStorage.removeItem('refresh_token')
-        localStorage.removeItem('user_info')
+        storage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
+        storage.removeItem(STORAGE_KEYS.USER_INFO)
         setAuthStateInternal({
           isAuthenticated: false,
           user: null,
@@ -92,8 +88,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     registerUnauthorizedListener(() => {
       console.warn('Axios interceptor triggered 401 unauthorized - clearing local auth state.')
-      localStorage.removeItem('refresh_token')
-      localStorage.removeItem('user_info')
+      storage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
+      storage.removeItem(STORAGE_KEYS.USER_INFO)
       setAuthStateInternal({
         isAuthenticated: false,
         user: null,
@@ -110,8 +106,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       console.error('Logout request failed on backend:', error)
     } finally {
-      localStorage.removeItem('refresh_token')
-      localStorage.removeItem('user_info')
+      storage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
+      storage.removeItem(STORAGE_KEYS.USER_INFO)
       setAuthStateInternal({
         isAuthenticated: false,
         user: null,
