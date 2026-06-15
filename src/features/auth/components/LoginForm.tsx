@@ -130,6 +130,27 @@ export function LoginForm() {
         style={{ opacity: isLoading || !scriptLoaded ? 0.6 : 1 }}
       />
 
+      {env.isDev && (
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              // Pass a token with base64 payload that decodes to sub = "dev_user_123"
+              // {"sub":"dev_user_123"} base64url is eyJzdWIiOiJkZXZfdXNlcl8xMjMifQ
+              await loginWithGoogle("mock.eyJzdWIiOiJkZXZfdXNlcl8xMjMifQ.mock")
+              navigate('/grocery')
+            } catch (err) {
+              console.error('Mock dev login failed:', err)
+            }
+          }}
+          disabled={isLoading}
+          className="w-[320px] mt-2 bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white font-semibold text-xs py-3 px-5 rounded-lg active:scale-[0.98] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>Dev Mode: Bypass Auth</span>
+        </button>
+      )}
+
       {(isLoading || !scriptLoaded) && (
         <div className="text-xs text-text-muted animate-pulse">
           {isLoading ? 'Authenticating credentials...' : 'Bootstrapping Google Services...'}
