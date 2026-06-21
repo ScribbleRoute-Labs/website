@@ -4,12 +4,17 @@
   --color-primary: #D0BCFF;
   --color-secondary: #CCC2DC;
   --color-tertiary: #EFB8C8;
-  --color-surface-tile: #1A1A1A;
-  --color-bg-black: #000000;
-  --color-text-primary: #FFFFFF;
-  --color-text-muted: #888888;
+  --color-surface-tile: #121212;
+  --color-bg-black: #0A0A0A;
+  --color-text-primary: #F3F4F6;
+  --color-text-muted: #9CA3AF;
   
   --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  
+  --color-neon-purple: #D0BCFF;
+  --color-neon-pink: #EFB8C8;
+  --color-neon-teal: #80F3D6;
+  --color-neon-blue: #60A5FA;
 }
 
 :root {
@@ -34,11 +39,42 @@ body {
   min-height: 100vh;
   background-color: var(--color-bg-black);
   color: var(--color-text-primary);
+  overflow-x: hidden;
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
+}
+
+/* Custom grid background */
+.bg-grid-pattern {
+  background-size: 30px 30px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+}
+
+/* Glassmorphism panel base */
+.glass-panel {
+  background: rgba(18, 18, 18, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Neon glow indicators */
+.shadow-neon-purple {
+  box-shadow: 0 0 15px -3px rgba(208, 188, 255, 0.3), 0 0 4px -1px rgba(208, 188, 255, 0.2);
+}
+.shadow-neon-pink {
+  box-shadow: 0 0 15px -3px rgba(239, 184, 200, 0.3), 0 0 4px -1px rgba(239, 184, 200, 0.2);
+}
+.shadow-neon-teal {
+  box-shadow: 0 0 15px -3px rgba(128, 243, 214, 0.3), 0 0 4px -1px rgba(128, 243, 214, 0.2);
+}
+.shadow-neon-blue {
+  box-shadow: 0 0 15px -3px rgba(96, 165, 250, 0.3), 0 0 4px -1px rgba(96, 165, 250, 0.2);
 }
 
 /* Custom scrollbar matching dark theme */
@@ -52,10 +88,30 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-surface-tile);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2a2a2a;
+  background: rgba(255, 255, 255, 0.25);
 }
+
+/* Micro-animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
+}
+
