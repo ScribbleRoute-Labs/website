@@ -2,10 +2,10 @@ export function Footer() {
   return (
     <footer className="w-full py-16 mt-20 border-t border-neutral-900 bg-neutral-950/20">
       <div className="max-w-4xl mx-auto px-4 space-y-12">
-        
+
         {/* Footnotes / Top Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-xs font-mono text-neutral-500">
-          
+
           {/* Column 1: Domain mappings */}
           <div className="space-y-3">
             <span className="text-white font-bold text-[10px] uppercase tracking-wider block">Domain Mappings</span>

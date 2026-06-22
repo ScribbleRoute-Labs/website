@@ -5,7 +5,7 @@ export function ProductTier() {
   return (
     <section id="pricing" className="w-full py-20 border-t border-neutral-900">
       <div className="max-w-4xl mx-auto space-y-16">
-        
+
         {/* Section Header */}
         <div className="text-center space-y-4">
           <span className="text-xs uppercase font-mono tracking-widest text-neon-pink">
@@ -21,7 +21,7 @@ export function ProductTier() {
 
         {/* Tier Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-          
+
           {/* Card 1: ScribbleKeep (Free) */}
           <div className="glass-panel p-8 rounded-2xl border border-neutral-850 flex flex-col justify-between relative overflow-hidden group hover:border-neutral-800 transition-all duration-300">
             <div className="space-y-6">
@@ -41,9 +41,9 @@ export function ProductTier() {
                 <span className="text-4xl font-black text-white">$0</span>
                 <span className="text-xs text-text-muted ml-2 font-mono">/ Forever Free</span>
               </div>
-              
+
               <div className="w-full h-[1px] bg-neutral-850/60" />
-              
+
               <ul className="space-y-3.5 text-sm text-neutral-300">
                 <li className="flex items-start gap-2.5">
                   <Check className="w-4 h-4 text-neon-teal shrink-0 mt-0.5" />
@@ -67,7 +67,7 @@ export function ProductTier() {
                 </li>
               </ul>
             </div>
-            
+
             <div className="pt-8">
               <Link
                 to="/canvas"
@@ -102,9 +102,9 @@ export function ProductTier() {
                 <span className="text-4xl font-black text-white">$15</span>
                 <span className="text-xs text-text-muted ml-2 font-mono">/ Single Lifetime Buy</span>
               </div>
-              
+
               <div className="w-full h-[1px] bg-neutral-850/60" />
-              
+
               <ul className="space-y-3.5 text-sm text-neutral-300">
                 <li className="flex items-start gap-2.5">
                   <Check className="w-4 h-4 text-neon-pink shrink-0 mt-0.5" />
@@ -128,7 +128,7 @@ export function ProductTier() {
                 </li>
               </ul>
             </div>
-            
+
             <div className="pt-8">
               <button
                 onClick={() => alert('ScribbleRemote purchase simulation triggered! One-time fee: $15. No recurring billing.')}

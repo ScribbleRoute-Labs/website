@@ -151,9 +151,8 @@ export function EngineeringDeepDive() {
             return (
               <div
                 key={section.id}
-                className={`glass-panel rounded-xl overflow-hidden transition-all duration-300 ${
-                  isOpen ? 'border-neutral-700 bg-neutral-900/40' : 'border-neutral-850 hover:border-neutral-800 bg-neutral-900/10'
-                }`}
+                className={`glass-panel rounded-xl overflow-hidden transition-all duration-300 ${isOpen ? 'border-neutral-700 bg-neutral-900/40' : 'border-neutral-850 hover:border-neutral-800 bg-neutral-900/10'
+                  }`}
               >
                 <button
                   onClick={() => toggleSection(section.id)}
@@ -161,9 +160,8 @@ export function EngineeringDeepDive() {
                   aria-expanded={isOpen}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`p-2.5 rounded-lg bg-neutral-900/80 border transition-all duration-300 ${
-                      isOpen ? 'border-neutral-700 text-white' : 'border-neutral-850 text-neutral-400'
-                    }`}>
+                    <div className={`p-2.5 rounded-lg bg-neutral-900/80 border transition-all duration-300 ${isOpen ? 'border-neutral-700 text-white' : 'border-neutral-850 text-neutral-400'
+                      }`}>
                       {section.icon}
                     </div>
                     <div>
@@ -172,16 +170,14 @@ export function EngineeringDeepDive() {
                     </div>
                   </div>
                   <ChevronDown
-                    className={`w-5 h-5 text-neutral-500 transition-transform duration-300 ${
-                      isOpen ? 'rotate-180 text-white' : ''
-                    }`}
+                    className={`w-5 h-5 text-neutral-500 transition-transform duration-300 ${isOpen ? 'rotate-180 text-white' : ''
+                      }`}
                   />
                 </button>
 
                 <div
-                  className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                    isOpen ? 'max-h-[1000px] border-t border-neutral-850' : 'max-h-0'
-                  }`}
+                  className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-[1000px] border-t border-neutral-850' : 'max-h-0'
+                    }`}
                 >
                   <div className="p-6 bg-neutral-900/20">
                     {section.content}

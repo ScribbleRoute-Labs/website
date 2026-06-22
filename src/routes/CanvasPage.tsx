@@ -1,13 +1,13 @@
 import { useState, useRef, useTransition } from 'react'
 import { Link } from 'react-router-dom'
-import { 
-  Volume2, 
-  Clock, 
-  Trash2, 
-  Activity, 
-  Database, 
-  Wifi, 
-  Shield, 
+import {
+  Volume2,
+  Clock,
+  Trash2,
+  Activity,
+  Database,
+  Wifi,
+  Shield,
   ArrowLeft
 } from 'lucide-react'
 import { Footer } from '@/components/Footer'
@@ -33,14 +33,14 @@ export function CanvasPage() {
   const [currentPoints, setCurrentPoints] = useState<Point[]>([])
   const [activeColor, setActiveColor] = useState('#D0BCFF') // neon-purple
   const [activeTool, setActiveTool] = useState<'brush' | 'circle' | 'triangle' | 'square'>('brush')
-  
+
   // Parent Control State
   const [volumeCap, setVolumeCap] = useState<50 | 80>(50)
   const [screenLimit, setScreenLimit] = useState(45)
   const [screenElapsed] = useState(42)
   const [isPushing, setIsPushing] = useState(false)
   const [pushLogs, setPushLogs] = useState<string[]>([])
-  
+
   // Low-level DB Simulator Console Logs
   const [dbLogs, setDbLogs] = useState<string[]>([
     '[INIT] ScribbleKeep Local DB online (SQLite3 Loopback VFS)',
@@ -59,7 +59,7 @@ export function CanvasPage() {
 
   // Web Audio alternative visual feedback triggers (wiggles and pulses)
   const [wiggleBtn, setWiggleBtn] = useState<string | null>(null)
-  
+
   const triggerVisualPulse = (btnName: string) => {
     setWiggleBtn(btnName)
     setTimeout(() => setWiggleBtn(null), 400)
@@ -79,9 +79,9 @@ export function CanvasPage() {
   const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
     const coords = getCoordinates(e)
     if (!coords) return
-    
+
     canvasRef.current?.setPointerCapture(e.pointerId)
-    
+
     if (activeTool === 'brush') {
       setIsDrawing(true)
       setCurrentPoints([coords])
@@ -104,7 +104,7 @@ export function CanvasPage() {
     if (!isDrawing || activeTool !== 'brush') return
     const coords = getCoordinates(e)
     if (!coords) return
-    
+
     startTransition(() => {
       setCurrentPoints(prev => {
         const next = [...prev, coords]
@@ -149,7 +149,7 @@ export function CanvasPage() {
   const triggerPushNotification = () => {
     if (isPushing) return
     setIsPushing(true)
-    
+
     const logs = [
       '⚡ [Rust API]: Received parental session extension request',
       '🔒 [Rust API]: Auth validation passed (JWT verified via Google Auth client)',
@@ -183,8 +183,8 @@ export function CanvasPage() {
               ScribbleRoute <span className="text-neutral-500 font-normal">Labs</span>
             </span>
           </Link>
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-neutral-850 bg-neutral-900/50 hover:bg-neutral-850 text-neutral-400 hover:text-white transition-all text-xs font-mono group"
           >
             <ArrowLeft className="w-3 h-3 text-neutral-500 group-hover:-translate-x-0.5 transition-transform" />
@@ -207,13 +207,13 @@ export function CanvasPage() {
 
         {/* The Split Screen Container */}
         <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          
+
           {/* Left Side: ScribbleBox (Zero-Word Arcade) */}
           <div className="lg:col-span-7 flex flex-col">
             <div className="w-full bg-neutral-900/40 rounded-2xl border border-neutral-800/80 p-4 sm:p-6 shadow-2xl flex flex-col flex-1 relative overflow-hidden">
               {/* Ambient Background Glow */}
               <div className="absolute top-0 right-0 w-48 h-48 bg-neon-purple/5 blur-3xl pointer-events-none rounded-full" />
-              
+
               {/* Toy Case Mock Header */}
               <div className="flex items-center justify-between pb-4 border-b border-neutral-850/60 mb-4">
                 <div className="flex gap-2">
@@ -286,8 +286,8 @@ export function CanvasPage() {
                       return (
                         <rect
                           key={p.id}
-                          x={pt.x - size/2}
-                          y={pt.y - size/2}
+                          x={pt.x - size / 2}
+                          y={pt.y - size / 2}
                           width={size}
                           height={size}
                           fill="none"
@@ -339,9 +339,8 @@ export function CanvasPage() {
                         setActiveColor(c.hex)
                         addDbLog(`[state] Brush color updated: ${c.hex}`)
                       }}
-                      className={`w-6 sm:w-8 h-6 sm:h-8 rounded-full border-2 transition-all ${
-                        activeColor === c.hex ? 'border-white scale-110 ' + c.shadow : 'border-transparent hover:scale-105 bg-neutral-800'
-                      }`}
+                      className={`w-6 sm:w-8 h-6 sm:h-8 rounded-full border-2 transition-all ${activeColor === c.hex ? 'border-white scale-110 ' + c.shadow : 'border-transparent hover:scale-105 bg-neutral-800'
+                        }`}
                       style={{ backgroundColor: c.hex }}
                       aria-label={`Select color ${c.hex}`}
                     />
@@ -362,11 +361,10 @@ export function CanvasPage() {
                         setActiveTool(t.tool as 'brush' | 'circle' | 'triangle' | 'square')
                         addDbLog(`[state] Tool set to: ${t.tool}`)
                       }}
-                      className={`py-2 rounded-lg text-sm font-semibold transition-all ${
-                        activeTool === t.tool 
-                          ? 'bg-neutral-800 text-white border border-neutral-700' 
+                      className={`py-2 rounded-lg text-sm font-semibold transition-all ${activeTool === t.tool
+                          ? 'bg-neutral-800 text-white border border-neutral-700'
                           : 'text-neutral-500 hover:text-neutral-300'
-                      }`}
+                        }`}
                     >
                       {t.label}
                     </button>
@@ -400,9 +398,8 @@ export function CanvasPage() {
                     <button
                       key={a.emoji}
                       onClick={() => triggerVisualPulse(a.label)}
-                      className={`py-3 rounded-xl border bg-black/40 text-xl font-bold flex flex-col items-center justify-center transition-all ${a.class} ${
-                        wiggleBtn === a.label ? 'scale-90 rotate-3' : 'hover:scale-[1.03]'
-                      }`}
+                      className={`py-3 rounded-xl border bg-black/40 text-xl font-bold flex flex-col items-center justify-center transition-all ${a.class} ${wiggleBtn === a.label ? 'scale-90 rotate-3' : 'hover:scale-[1.03]'
+                        }`}
                     >
                       <span>{a.emoji}</span>
                       <span className="text-[9px] uppercase tracking-wider font-mono opacity-60 mt-1">{a.emoji === '🐶' ? 'WOOF' : a.emoji === '🐱' ? 'MEOW' : a.emoji === '🐦' ? 'TWEET' : 'ROAR'}</span>
@@ -418,7 +415,7 @@ export function CanvasPage() {
             <div className="w-full bg-neutral-900/40 rounded-2xl border border-neutral-800/80 p-4 sm:p-6 shadow-2xl flex flex-col flex-1 relative overflow-hidden">
               {/* Ambient Background Glow */}
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-neon-teal/5 blur-3xl pointer-events-none rounded-full" />
-              
+
               {/* Header info */}
               <div className="flex items-center justify-between pb-4 border-b border-neutral-850/60 mb-4">
                 <div className="flex items-center gap-1.5 text-xs text-neutral-400 font-mono">
@@ -432,7 +429,7 @@ export function CanvasPage() {
               </div>
 
               <div className="space-y-5 flex-1">
-                
+
                 {/* Dynamic Live Metrics */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 bg-neutral-950 rounded-xl border border-neutral-900 space-y-1">
@@ -460,11 +457,10 @@ export function CanvasPage() {
                     </div>
                     <button
                       onClick={toggleVolume}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono transition-all ${
-                        volumeCap === 50
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono transition-all ${volumeCap === 50
                           ? 'bg-neon-teal/10 border-neon-teal/20 text-neon-teal shadow-neon-teal'
                           : 'bg-neutral-900 border-neutral-800 text-neutral-400'
-                      }`}
+                        }`}
                     >
                       <Volume2 className="w-3.5 h-3.5" />
                       <span>{volumeCap === 50 ? '50% Cap (Safe)' : '80% Cap'}</span>
@@ -487,7 +483,7 @@ export function CanvasPage() {
 
                   {/* Progress Bar */}
                   <div className="w-full bg-neutral-900 rounded-full h-2 overflow-hidden border border-neutral-850">
-                    <div 
+                    <div
                       className="bg-gradient-to-r from-neon-purple to-neon-pink h-full transition-all duration-500"
                       style={{ width: `${Math.min(100, (screenElapsed / screenLimit) * 100)}%` }}
                     />
@@ -541,12 +537,12 @@ export function CanvasPage() {
                   <span className="text-[10px] uppercase font-mono text-neutral-500 tracking-wider">Local SQLite3 VFS Transaction Log</span>
                   <div className="w-full h-32 bg-black rounded-xl p-3 border border-neutral-900 font-mono text-[9px] text-neutral-400 overflow-y-auto flex flex-col-reverse space-y-1 space-y-reverse select-none leading-normal">
                     {dbLogs.map((log, i) => (
-                      <div 
-                        key={i} 
+                      <div
+                        key={i}
                         className={
-                          log.includes('[db.write]') ? 'text-neon-teal' : 
-                          log.includes('[event]') ? 'text-neon-pink' : 
-                          log.includes('[stream]') ? 'text-neutral-500' : 'text-neutral-400'
+                          log.includes('[db.write]') ? 'text-neon-teal' :
+                            log.includes('[event]') ? 'text-neon-pink' :
+                              log.includes('[stream]') ? 'text-neutral-500' : 'text-neutral-400'
                         }
                       >
                         {log}
@@ -558,7 +554,7 @@ export function CanvasPage() {
               </div>
             </div>
           </div>
-          
+
         </div>
       </main>
       <Footer />
