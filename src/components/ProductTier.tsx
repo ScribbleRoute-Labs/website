@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Check, X, Shield, Star, RefreshCw } from 'lucide-react'
 
 export function ProductTier() {
@@ -68,12 +69,12 @@ export function ProductTier() {
             </div>
             
             <div className="pt-8">
-              <a
-                href="#hero"
+              <Link
+                to="/canvas"
                 className="block w-full py-3 text-center text-xs font-semibold rounded-lg bg-neutral-950 border border-neutral-900 hover:border-neutral-850 text-neutral-300 hover:text-white transition-all font-mono"
               >
                 Launch Offline Demo
-              </a>
+              </Link>
             </div>
           </div>
 
