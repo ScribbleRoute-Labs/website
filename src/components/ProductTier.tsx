@@ -141,6 +141,48 @@ export function ProductTier() {
 
         </div>
 
+        {/* Feature Highlight: Real-time Remote Drawing Gallery */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-neutral-950/30 p-6 sm:p-8 rounded-2xl border border-neutral-900">
+          <div className="md:col-span-7 space-y-4">
+            <span className="text-[10px] uppercase font-mono tracking-widest text-neon-pink">
+              ScribbleRemote Exclusive Feature
+            </span>
+            <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              A Live Gallery of Your Child's Art
+            </h3>
+            <p className="text-sm text-text-muted leading-relaxed">
+              Never miss a creative moment. With ScribbleRemote, every vector path drawing is silently synced in real-time. Access the complete gallery of drawings on your phone, zoom in, and download pristine scaling SVGs directly.
+            </p>
+            <ul className="space-y-2 text-xs font-mono text-neutral-350">
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-neon-pink" />
+                <span>100% Vector Path preservation (no blur, no pixelation)</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-neon-pink" />
+                <span>Download SVG files to decorate your home or print on canvas</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-neon-pink" />
+                <span>Stateless end-to-end sync through Rust + Neon Edge</span>
+              </li>
+            </ul>
+          </div>
+          <div className="md:col-span-5 flex justify-center">
+            {/* Phone Mockup Frame */}
+            <div className="relative w-48 sm:w-56 bg-neutral-900 rounded-[36px] p-2.5 border-4 border-neutral-800 shadow-2xl overflow-hidden aspect-[9/19]">
+              <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-16 h-3 bg-neutral-800 rounded-full z-20 pointer-events-none" />
+              <div className="relative w-full h-full bg-neutral-950 rounded-[28px] overflow-hidden border border-neutral-850">
+                <img
+                  src="/images/ScribbleKeepCloud_Drawing_Viewer.png"
+                  alt="ScribbleKeepCloud Drawing Gallery Viewer"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Side-by-Side Comparison Table */}
         <div className="pt-8 space-y-4">
           <h3 className="text-lg font-bold text-white tracking-tight text-center md:text-left">
