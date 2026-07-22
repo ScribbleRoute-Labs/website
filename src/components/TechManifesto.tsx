@@ -28,20 +28,20 @@ export function TechManifesto() {
             <div className="space-y-2">
               <h3 className="text-lg font-bold text-white tracking-tight">100% Offline Core</h3>
               <p className="text-sm text-text-muted leading-relaxed">
-                No sign-up screens. No email prompts. No internet connection required. The second you open ScribbleBox, it is ready. It works on road trips, off-grid cabins, and flights without a single byte sent to the cloud.
+                Parent admin app is available for local use. No outbound requests until you ask for it. It works on road trips, off-grid cabins, and flights without a single byte sent to the cloud.
               </p>
             </div>
           </div>
 
-          {/* Card 2: Absolute Data Privacy */}
+          {/* Card 2: Absolute Data Privacy & Safety */}
           <div className="glass-panel p-6 rounded-2xl border border-neutral-850 space-y-4 hover:border-neutral-800 transition-colors">
             <div className="w-10 h-10 rounded-xl bg-neutral-950 border border-neutral-900 flex items-center justify-center text-neon-purple shadow-neon-purple">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-bold text-white tracking-tight">Absolute Data Privacy</h3>
+              <h3 className="text-lg font-bold text-white tracking-tight">Parent-Locked Control</h3>
               <p className="text-sm text-text-muted leading-relaxed">
-                ScribblePaint stores vector paths locally in an air-gapped sqlite database database. There are no tracking scripts, third-party analytics, or behavioral cookie mappings. Your child's creativity remains solely yours.
+                All audio is optional, and maximum volume is locked to parent control to protect hearing. Disable any game at any time, set time limits, and tweak games to scale difficulty.
               </p>
             </div>
           </div>
@@ -52,9 +52,9 @@ export function TechManifesto() {
               <Unlock className="w-5 h-5" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-bold text-white tracking-tight">Zero Cloud Lock-In</h3>
+              <h3 className="text-lg font-bold text-white tracking-tight">Optional Cloud Power-Up</h3>
               <p className="text-sm text-text-muted leading-relaxed">
-                Accounts are optional power-ups, never gatekeepers. Your drawings belong to you. Export raw vector coordinates or export vector images instantly. We build apps that children outgrow, not apps that hold memories hostage.
+                Optional Google Account for true remote access. Save vector drawings and signatures to view your child's art after the fact. No predatory subscriptions ever.
               </p>
             </div>
           </div>
@@ -68,10 +68,10 @@ export function TechManifesto() {
           </div>
           <div className="space-y-2">
             <p className="text-sm md:text-base text-neutral-300 italic leading-relaxed">
-              "We believe software for children should be treated like physical wooden toys. You buy it once, it lives on your shelf, it works without a plug, and it is yours forever. No subscription plans, no continuous updates that break features, and no corporate tracking."
+              "We believe software for children should be built like a physical wooden toybox. Enough games to not get bored, games that grow with your child, agency without escape, games that teach accidentally, and fun without addiction."
             </p>
             <div className="text-xs uppercase font-mono tracking-widest text-neutral-500">
-              — The ScribbleRoute Labs Engineering Manifesto
+              — The ScribbleRoute Labs Design Philosophy
             </div>
           </div>
         </div>

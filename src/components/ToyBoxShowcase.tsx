@@ -20,7 +20,7 @@ const GAMES_LIST: GameData[] = [
     name: 'ToyBox Launcher',
     tag: 'Main Portal',
     objective: 'Choice & Toddler Independence',
-    description: 'The language-agnostic landing dashboard. Features large tapping areas, bright animated cards, and zero textual barriers, allowing children to launch any mini-game independently.',
+    description: 'The language-agnostic landing dashboard. Features large touch targets, bright animated cards, and zero textual barriers, allowing toddlers to launch any mini-game independently.',
     emoji: '📱',
     images: ['/images/HomeScreen_1.png', '/images/HomeScreen_2.png'],
     themeColor: '#D0BCFF',
@@ -28,22 +28,46 @@ const GAMES_LIST: GameData[] = [
     shadowClass: 'shadow-neon-purple'
   },
   {
-    id: 'safari',
-    name: 'Flashlight Safari',
-    tag: 'Exploration',
-    objective: 'Spatial Awareness & Curiosity',
-    description: 'Explore a dark screen using a virtual flashlight beam to discover hidden animals. Sweeping the light beam triggers responsive animal animations and lively environmental sound effects.',
-    emoji: '🔦',
-    images: ['/images/FlashlightSafari_1.png', '/images/FlashlightSafari_2.png'],
+    id: 'scribblepaint',
+    name: 'ScribblePaint',
+    tag: 'Color Mixing',
+    objective: 'How Colors Mix Together to Make New Colors',
+    description: 'Draw with digital finger strokes and discover how primary colors mix together to create vibrant new colors. Raw vector path streaming preserves drawings infinitely without pixelation.',
+    emoji: '🎨',
+    images: ['/images/TraceTheLetters.png'],
+    themeColor: '#EFB8C8',
+    themeClass: 'text-neon-pink bg-neon-pink/10 border-neon-pink/20',
+    shadowClass: 'shadow-neon-pink'
+  },
+  {
+    id: 'catcher',
+    name: 'Bug Catcher',
+    tag: 'Reflexes & Color Match',
+    objective: 'Eye-Hand Coordination & Color Matching',
+    description: 'Tap crawling ladybugs and caterpillars across a grass field. Fast-paced tapping action that builds eye-hand coordination, rapid response times, and color matching skills.',
+    emoji: '🪲',
+    images: ['/images/Bug_Catcher.png'],
     themeColor: '#80F3D6',
     themeClass: 'text-neon-teal bg-neon-teal/10 border-neon-teal/20',
     shadowClass: 'shadow-neon-teal'
   },
   {
+    id: 'tracing',
+    name: 'Letter Tracing',
+    tag: 'Pre-Writing',
+    objective: 'Drawing Letters & Writing Their Name',
+    description: 'Trace guided lines to draw letters, numbers, and practice writing their name. Teaches stroke direction, grip confidence, and early handwriting with tactile completion pops.',
+    emoji: '✍️',
+    images: ['/images/TraceTheLetters.png'],
+    themeColor: '#D0BCFF',
+    themeClass: 'text-neon-purple bg-neon-purple/10 border-neon-purple/20',
+    shadowClass: 'shadow-neon-purple'
+  },
+  {
     id: 'colorbee',
     name: 'Color Bee',
     tag: 'Color Matching',
-    objective: 'Early Color Theory & Motor Control',
+    objective: 'Color Matching & Motor Control',
     description: 'Match colors and guide busy bumblebees to their corresponding flower beds. An engaging puzzle that teaches early color categorization and builds precision motor controls.',
     emoji: '🐝',
     images: ['/images/ColorBee_1.png', '/images/ColorBee_2.png'],
@@ -54,9 +78,9 @@ const GAMES_LIST: GameData[] = [
   {
     id: 'feed',
     name: 'Animal Feed Match',
-    tag: 'Sorting',
-    objective: 'Shape & Object Recognition',
-    description: 'Feed hungry animals like a giant forest bear by matching food items to their preferences. Fosters early shape sorting and matching logic through friendly, feedback-driven animation.',
+    tag: 'Animal Diets',
+    objective: 'Animals & Examples of Things They Eat',
+    description: 'Feed hungry animals like a giant forest bear by matching food items to their natural diets. Fosters animal recognition and matching logic through friendly feedback animations.',
     emoji: '🐻',
     images: ['/images/AnimalFeed_Bear.png'],
     themeColor: '#60A5FA',
@@ -64,28 +88,16 @@ const GAMES_LIST: GameData[] = [
     shadowClass: 'shadow-neon-blue'
   },
   {
-    id: 'catcher',
-    name: 'Bug Catcher',
-    tag: 'Reflexes',
-    objective: 'Visual Tracking & Action Response',
-    description: 'Tap to catch crawling ladybugs and caterpillars on a grass playground. Fast-paced tapping action that builds response time and hand-eye coordination with rich tactile pops.',
-    emoji: '🪲',
-    images: ['/images/Bug_Catcher.png'],
+    id: 'safari',
+    name: 'Flashlight Safari',
+    tag: 'Exploration',
+    objective: 'Spatial Awareness & Animal Discovery',
+    description: 'Explore a dark screen using a virtual flashlight beam to discover hidden animals. Sweeping the light beam triggers responsive animal animations and lively environmental sound effects.',
+    emoji: '🔦',
+    images: ['/images/FlashlightSafari_1.png', '/images/FlashlightSafari_2.png'],
     themeColor: '#80F3D6',
     themeClass: 'text-neon-teal bg-neon-teal/10 border-neon-teal/20',
     shadowClass: 'shadow-neon-teal'
-  },
-  {
-    id: 'tracing',
-    name: 'Letter Tracing',
-    tag: 'Early Literacy',
-    objective: 'Path Drawing & Pre-Writing',
-    description: 'Trace guided lines to draw letters, numbers, and basic shapes. The perfect foundation for grip control and early handwriting with fun, responsive rewards upon path completion.',
-    emoji: '✍️',
-    images: ['/images/TraceTheLetters.png'],
-    themeColor: '#D0BCFF',
-    themeClass: 'text-neon-purple bg-neon-purple/10 border-neon-purple/20',
-    shadowClass: 'shadow-neon-purple'
   }
 ]
 
@@ -102,10 +114,10 @@ export function ToyBoxShowcase() {
 
   const activeGame = GAMES_LIST.find(g => g.id === activeGameId) || GAMES_LIST[0]
 
-  // Reset slide index when active game changes
-  useEffect(() => {
+  const handleSelectGame = (id: string) => {
+    setActiveGameId(id)
     setActiveSlideIndex(0)
-  }, [activeGameId])
+  }
 
   // Handle slide rotation for games with multiple screenshots
   useEffect(() => {
@@ -158,7 +170,7 @@ export function ToyBoxShowcase() {
                 return (
                   <button
                     key={game.id}
-                    onClick={() => setActiveGameId(game.id)}
+                    onClick={() => handleSelectGame(game.id)}
                     className={`w-full flex items-center gap-4 p-3.5 rounded-xl text-left transition-all duration-300 border focus:outline-none focus-visible:ring-2 focus-visible:ring-neon-purple/50 ${
                       isActive
                         ? `bg-neutral-900/60 border-neutral-700 shadow-sm`
@@ -242,7 +254,7 @@ export function ToyBoxShowcase() {
                       )
                     })}
 
-                    {/* Left/Right Arrow Navigation Overlays (Only show when activeGame has multiple screenshots) */}
+                    {/* Left/Right Arrow Navigation Overlays */}
                     {activeGame.images.length > 1 && (
                       <>
                         <button

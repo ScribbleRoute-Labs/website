@@ -35,7 +35,7 @@ export function ProductTier() {
                 </div>
               </div>
               <p className="text-sm text-text-muted leading-relaxed">
-                The local, private control app that runs on the same physical tablet as ScribbleBox. Completely air-gapped, zero-data transmission.
+                The local, private control app that runs on the same physical tablet as ScribbleBox. 100% local, air-gapped, with zero outbound requests until requested.
               </p>
               <div className="pt-2">
                 <span className="text-4xl font-black text-white">$0</span>
@@ -47,23 +47,27 @@ export function ProductTier() {
               <ul className="space-y-3.5 text-sm text-neutral-300">
                 <li className="flex items-start gap-2.5">
                   <Check className="w-4 h-4 text-neon-teal shrink-0 mt-0.5" />
-                  <span>100% Offline execution &amp; SQLite3 storage</span>
+                  <span>100% Offline execution &amp; SQLite storage</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="w-4 h-4 text-neon-teal shrink-0 mt-0.5" />
-                  <span>On-device parent lock volume limits</span>
+                  <span>Max volume limits &amp; optional audio toggles</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="w-4 h-4 text-neon-teal shrink-0 mt-0.5" />
-                  <span>Local screen time date-bound timers</span>
+                  <span>Disable any game &amp; tweak difficulty levels</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <Check className="w-4 h-4 text-neon-teal shrink-0 mt-0.5" />
+                  <span>Gentle screen time shutdown timers</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <Check className="w-4 h-4 text-neon-teal shrink-0 mt-0.5" />
+                  <span>Save drawings &amp; signatures for offline viewing</span>
                 </li>
                 <li className="flex items-start gap-2.5 text-neutral-500 line-through decoration-neutral-800">
                   <X className="w-4 h-4 text-neutral-600 shrink-0 mt-0.5" />
                   <span>Multi-device remote controls</span>
-                </li>
-                <li className="flex items-start gap-2.5 text-neutral-500 line-through decoration-neutral-800">
-                  <X className="w-4 h-4 text-neutral-600 shrink-0 mt-0.5" />
-                  <span>Google Auth profile linking</span>
                 </li>
               </ul>
             </div>
@@ -96,7 +100,7 @@ export function ProductTier() {
                 </div>
               </div>
               <p className="text-sm text-text-muted leading-relaxed">
-                Connect your phone directly to the tablet config. Extend sessions (+15 min), update volume limits silently, and view drawing galleries from anywhere.
+                Connect your phone directly to the tablet profile with an optional Google Account link. Extend sessions (+15 min), adjust volume locks, and view galleries remotely.
               </p>
               <div className="pt-2">
                 <span className="text-4xl font-black text-white">$15</span>
@@ -108,7 +112,11 @@ export function ProductTier() {
               <ul className="space-y-3.5 text-sm text-neutral-300">
                 <li className="flex items-start gap-2.5">
                   <Check className="w-4 h-4 text-neon-pink shrink-0 mt-0.5" />
-                  <span>Includes all ScribbleKeep features</span>
+                  <span>Includes all ScribbleKeep local parent features</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <Check className="w-4 h-4 text-neon-pink shrink-0 mt-0.5" />
+                  <span>Remote game disabling &amp; volume lock overrides</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="w-4 h-4 text-neon-pink shrink-0 mt-0.5" />
@@ -116,15 +124,11 @@ export function ProductTier() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="w-4 h-4 text-neon-pink shrink-0 mt-0.5" />
-                  <span>Real-time silent serverless push notifications</span>
+                  <span>Global vector drawing &amp; signature galleries</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="w-4 h-4 text-neon-pink shrink-0 mt-0.5" />
-                  <span>Global vector path drawing galleries</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <Check className="w-4 h-4 text-neon-pink shrink-0 mt-0.5" />
-                  <span>Google Auth profile linking</span>
+                  <span>Optional Google Auth profile linking</span>
                 </li>
               </ul>
             </div>
@@ -148,10 +152,10 @@ export function ProductTier() {
               ScribbleRemote Exclusive Feature
             </span>
             <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              A Live Gallery of Your Child's Art
+              A Live Gallery of Your Child's Art &amp; Signatures
             </h3>
             <p className="text-sm text-text-muted leading-relaxed">
-              Never miss a creative moment. With ScribbleRemote, every vector path drawing is silently synced in real-time. Access the complete gallery of drawings on your phone, zoom in, and download pristine scaling SVGs directly.
+              Never miss a creative moment. Save finger paintings, traced letters, and signatures to view your child's art after the fact. Access the complete artwork gallery on your phone, zoom in, and download scaling vector SVGs.
             </p>
             <ul className="space-y-2 text-xs font-mono text-neutral-350">
               <li className="flex items-center gap-2">
@@ -200,28 +204,33 @@ export function ProductTier() {
               <tbody className="divide-y divide-neutral-900/60">
                 <tr>
                   <td className="p-4 font-medium text-white">Hosting Architecture</td>
-                  <td className="p-4 text-neutral-400">100% Local / Sandbox</td>
+                  <td className="p-4 text-neutral-400">100% Local / Air-Gapped</td>
                   <td className="p-4 text-neutral-400">Local + Edge Switchboard Relay</td>
                 </tr>
                 <tr>
-                  <td className="p-4 font-medium text-white">Database Engine</td>
-                  <td className="p-4 text-neutral-400">On-device SQLite3 Loopback</td>
-                  <td className="p-4 text-neutral-400">Local SQLite3 + Neon (Sync ledger)</td>
-                </tr>
-                <tr>
                   <td className="p-4 font-medium text-white">Network Communication</td>
-                  <td className="p-4 text-neutral-400">Air-gapped (No sockets)</td>
+                  <td className="p-4 text-neutral-400">Zero outbound requests</td>
                   <td className="p-4 text-neutral-400">Stateless REST API + SSE sockets</td>
                 </tr>
                 <tr>
                   <td className="p-4 font-medium text-white">Parent Control Access</td>
-                  <td className="p-4 text-neutral-400">Same-device admin profile</td>
-                  <td className="p-4 text-neutral-400">Multi-device cloud admin link</td>
+                  <td className="p-4 text-neutral-400">Same-device local admin app</td>
+                  <td className="p-4 text-neutral-400">Multi-device remote cloud admin link</td>
+                </tr>
+                <tr>
+                  <td className="p-4 font-medium text-white">Volume Limits &amp; Audio</td>
+                  <td className="p-4 text-neutral-400">On-device max volume lock</td>
+                  <td className="p-4 text-neutral-400">Remote max volume lock override</td>
+                </tr>
+                <tr>
+                  <td className="p-4 font-medium text-white">Game &amp; Difficulty Management</td>
+                  <td className="p-4 text-neutral-400">Local game disabling &amp; difficulty tweaks</td>
+                  <td className="p-4 text-neutral-400">Remote game disabling &amp; difficulty tweaks</td>
                 </tr>
                 <tr>
                   <td className="p-4 font-medium text-white">Session Timer Auditing</td>
-                  <td className="p-4 text-neutral-400">Stateless Date-Bound check</td>
-                  <td className="p-4 text-neutral-400">Stateless Date-Bound + Remote overrides</td>
+                  <td className="p-4 text-neutral-400">Stateless Gentle Shutdown check</td>
+                  <td className="p-4 text-neutral-400">Gentle Shutdown + Remote +15m extension</td>
                 </tr>
                 <tr>
                   <td className="p-4 font-medium text-white">Billing Lifecycle</td>
