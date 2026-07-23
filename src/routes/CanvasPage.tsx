@@ -153,7 +153,7 @@ export function CanvasPage() {
     const logs = [
       '⚡ [Rust API]: Received parental session extension request',
       '🔒 [Rust API]: Auth validation passed (JWT verified via Google Auth client)',
-      '🌐 [Stateless K8s Switchboard]: Routing payload to Neon routing ledger',
+      '🌐 [K8s Edge Relay]: Syncing payload to Neon routing ledger',
       '📨 [Neon Hub]: Broadcasting SSE silent payload target_device: "keep_profile_1"',
       '📱 [ScribbleKeep]: Neon payload received: { "command": "extend_session", "minutes": 15 }'
     ]
@@ -523,7 +523,7 @@ export function CanvasPage() {
                 {pushLogs.length > 0 && (
                   <div className="p-3 bg-neutral-950/80 rounded-xl border border-neon-purple/20 space-y-1.5 text-[10px] font-mono text-neon-purple shadow-neon-purple max-h-32 overflow-y-auto">
                     <div className="font-semibold border-b border-neon-purple/10 pb-1 mb-1 flex justify-between items-center">
-                      <span>STATELESS PUSH TELEMETRY IN FLIGHT</span>
+                      <span>PUSH TELEMETRY IN FLIGHT</span>
                       <span className="w-1.5 h-1.5 rounded-full bg-neon-purple animate-ping" />
                     </div>
                     {pushLogs.map((log, i) => (

@@ -52,16 +52,16 @@ export function EngineeringDeepDive() {
     },
     {
       id: 'rust-switchboard',
-      title: 'The Stateless Rust API Switchboard',
-      subtitle: 'Zero-Habit Zero-Data Routing Layer',
+      title: 'The Rust API Relay & Sync Engine',
+      subtitle: 'Seamless Configuration & Artwork Distribution',
       icon: <GitFork className="w-5 h-5 text-neon-pink" />,
       content: (
         <div className="space-y-4 text-sm text-text-muted leading-relaxed">
           <p>
-            For parents who choose <strong className="text-white">ScribbleRemote</strong> for cross-house control, remote adjustments must traverse the internet. Most companies use this as an excuse to log your location, map user habits, and store children's files on centralized databases.
+            For parents who choose <strong className="text-white">ScribbleRemote</strong> for cross-house control, remote adjustments must traverse the internet. Most companies use this as an excuse to log your location and map user habits.
           </p>
           <p>
-            We engineered our servers to act as a <strong className="text-white">stateless switchboard</strong>. Written in Rust and deployed across a distributed Kubernetes edge, the backend routes real-time commands (like volume updates or session extensions) directly from parent devices to ScribbleKeep profiles without ever saving the payload to disk.
+            Written in Rust and deployed across a distributed Kubernetes edge, our backend stores configurations and drawings as they pass through so that they can easily be distributed to clients whenever they start up in the future.
           </p>
           <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch">
             <div className="flex-1 p-3 rounded bg-black/30 border border-neutral-850 flex flex-col justify-center items-center text-center">
@@ -72,26 +72,26 @@ export function EngineeringDeepDive() {
               ──▶
             </div>
             <div className="flex-1 p-3 rounded bg-black/40 border border-neon-pink/20 flex flex-col justify-center items-center text-center shadow-neon-pink">
-              <span className="text-xs font-semibold text-neon-pink mb-1">Stateless Switchboard (Rust)</span>
-              <span className="text-[10px] text-neutral-400">Verifies JWT token &amp; pushes message. Store to DB? [NO]</span>
+              <span className="text-xs font-semibold text-neon-pink mb-1">Rust API Relay (Kubernetes Edge)</span>
+              <span className="text-[10px] text-neutral-400">Verifies JWT token, stores config &amp; drawings for startup sync</span>
             </div>
             <div className="flex items-center justify-center font-mono text-neon-teal text-xs select-none">
               ──▶
             </div>
             <div className="flex-1 p-3 rounded bg-black/30 border border-neutral-850 flex flex-col justify-center items-center text-center">
               <span className="text-xs font-semibold text-white mb-1">ScribbleKeep</span>
-              <span className="text-[10px] text-neon-teal">Local client applies setting offline</span>
+              <span className="text-[10px] text-neon-teal">Receives real-time push &amp; syncs state on startup</span>
             </div>
           </div>
           <p>
-            If our servers are ever compromised, there is nothing to steal. No profiles, no location logs, no toddler usage habits. Absolute privacy by architectural design.
+            Even though configuration and artwork pass through for easy future distribution to your devices, we never track your location or map user habits.
           </p>
         </div>
       )
     },
     {
       id: 'timer-design',
-      title: 'Stateless Date-Bound Dictionary Timers',
+      title: 'Date-Bound Dictionary Timers',
       subtitle: 'Zero Battery-Drain Screen Boundaries',
       icon: <Cpu className="w-5 h-5 text-neon-teal" />,
       content: (
@@ -103,10 +103,10 @@ export function EngineeringDeepDive() {
             ScribbleLabs implements a <strong className="text-white">lazy evaluation timer design</strong>. Instead of active polling, the application stores a dictionary of allowed boundaries bound to strict calendar dates, verified at transition entry-points.
           </p>
           <p>
-            When a child switches games in ScribbleBox or unlocks the screen, the system performs a stateless calculation comparing current timestamps against the locally stored dictionary boundaries:
+            When a child switches games in ScribbleBox or unlocks the screen, the system performs a calculation comparing current timestamps against the locally stored dictionary boundaries:
           </p>
           <div className="p-4 rounded-lg bg-black/40 border border-neutral-850 font-mono text-xs text-neutral-400 space-y-2 overflow-x-auto">
-            <span className="text-neutral-500">// Stateless Boundary Verification</span>
+            <span className="text-neutral-500">// Boundary Verification</span>
             <div className="text-neon-purple">
               {`const verifySession = (boundaryDict, currentTime) => {
   const dateKey = getFormattedDate(currentTime);

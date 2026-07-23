@@ -24,5 +24,5 @@ The website must describe an ecosystem consisting of three distinct layers:
 
 ## 3. High-Priority Architectural Features to Showcase
 - **Infinite-Resolution Memories:** Explain that Scribble Paint stores drawings locally as raw vector coordinate paths (`Flow` streaming) rather than lossy images, making them infinitely scalable and preserved forever.
-- **The Stateless Switchboard:** Highlight the engineering integrity—our server infrastructure acts as a privacy-centric stateless routing switchboard that never tracks user habits.
-- **Lazy Evaluation Resets:** Highlight that session timers use a stateless date-bound evaluation check rather than battery-draining background background services.
+- **The Rust API Relay & Sync Engine:** Highlight the engineering integrity—our server infrastructure safely stores configurations and drawings as they pass through for seamless startup distribution to client devices, without tracking user habits or locations.
+- **Lazy Evaluation Resets:** Highlight that session timers use a date-bound evaluation check rather than battery-draining background services.

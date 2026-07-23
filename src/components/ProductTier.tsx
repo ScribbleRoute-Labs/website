@@ -120,7 +120,7 @@ export function ProductTier() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="w-4 h-4 text-neon-pink shrink-0 mt-0.5" />
-                  <span>Stateless Rust API remote relay switchboard</span>
+                  <span>Rust API remote relay &amp; sync server</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Check className="w-4 h-4 text-neon-pink shrink-0 mt-0.5" />
@@ -168,7 +168,7 @@ export function ProductTier() {
               </li>
               <li className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-neon-pink" />
-                <span>Stateless end-to-end sync through Rust + Neon Edge</span>
+                <span>End-to-end sync through Rust + Neon Edge</span>
               </li>
             </ul>
           </div>
@@ -205,12 +205,12 @@ export function ProductTier() {
                 <tr>
                   <td className="p-4 font-medium text-white">Hosting Architecture</td>
                   <td className="p-4 text-neutral-400">100% Local / Air-Gapped</td>
-                  <td className="p-4 text-neutral-400">Local + Edge Switchboard Relay</td>
+                  <td className="p-4 text-neutral-400">Local + Edge Relay &amp; Sync</td>
                 </tr>
                 <tr>
                   <td className="p-4 font-medium text-white">Network Communication</td>
                   <td className="p-4 text-neutral-400">Zero outbound requests</td>
-                  <td className="p-4 text-neutral-400">Stateless REST API + SSE sockets</td>
+                  <td className="p-4 text-neutral-400">REST API + SSE sockets</td>
                 </tr>
                 <tr>
                   <td className="p-4 font-medium text-white">Parent Control Access</td>
@@ -229,7 +229,7 @@ export function ProductTier() {
                 </tr>
                 <tr>
                   <td className="p-4 font-medium text-white">Session Timer Auditing</td>
-                  <td className="p-4 text-neutral-400">Stateless Gentle Shutdown check</td>
+                  <td className="p-4 text-neutral-400">Lazy Gentle Shutdown check</td>
                   <td className="p-4 text-neutral-400">Gentle Shutdown + Remote +15m extension</td>
                 </tr>
                 <tr>

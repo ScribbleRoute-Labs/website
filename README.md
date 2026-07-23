@@ -1,6 +1,22 @@
-# React + TypeScript + Vite
+# ScribbleRoute Labs Web App (React + TypeScript + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Development & Setup
+
+This repository uses **pnpm** as its package manager.
+
+```bash
+# Install dependencies
+pnpm install
+
+# Start local development server
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Run linter
+pnpm lint
+```
 
 Currently, two official plugins are available:
 
